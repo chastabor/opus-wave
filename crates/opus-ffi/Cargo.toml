@@ -1,6 +1,6 @@
 [package]
 name = "opus-ffi"
-version = "2.2.2"
+version = "3.0.0"
 edition = "2024"
 description = "FFI bindings to C libopus for cross-validation and benchmarking"
 links = "opus_c_ref"

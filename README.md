@@ -55,18 +55,25 @@ Enable the `dnn` feature to access DRED, deep PLC, and OSCE:
 
 ```toml
 [dependencies]
-opus = { path = "crates/opus", features = ["dnn"] }
+opus = { version = "2", features = ["dnn"] }
 ```
+
+The `dnn` feature is an umbrella that enables three sub-features which can also
+be selected individually for finer-grained builds:
+
+- `dnn-deep-plc` — FARGAN + PitchDNN packet-loss concealment
+- `dnn-dred` — Deep REDundancy encode/decode (implies `dnn-deep-plc`)
+- `dnn-osce` — LACE/NoLACE post-filter
 
 ### Weight Blob
 
-The DNN models require a runtime weight blob (~16 MB). When the `opus-dnn`
-crate builds for the first time it downloads the official weights from
-xiph.org, converts them to the binary blob format, and produces a single
+The DNN models require a runtime weight blob (~16 MB). On first build with any
+`dnn-*` feature enabled, the root `build.rs` downloads the official weights
+from xiph.org, converts them to the binary blob format, and produces a single
 combined file at:
 
 ```
-crates/opus-dnn/model-data/blobs/opus_dnn.blob
+model-data/blobs/opus_dnn.blob
 ```
 
 This is the same format as C libopus `OPUS_SET_DNN_BLOB`. The blob is
@@ -79,8 +86,8 @@ only the weights it needs.
 ```rust
 use opus::{OpusEncoder, OpusDecoder, SampleRate, Channels, Application};
 
-// Load the combined weight blob (built automatically by opus-dnn)
-let weights = std::fs::read("crates/opus-dnn/model-data/blobs/opus_dnn.blob")?;
+// Load the combined weight blob (built automatically by build.rs)
+let weights = std::fs::read("model-data/blobs/opus_dnn.blob")?;
 
 // --- Encoder: DRED ---
 let mut enc = OpusEncoder::new(SampleRate::Hz48000, Channels::Mono, Application::Voip)?;
@@ -124,29 +131,35 @@ enc.load_dnn(WEIGHTS)?;
 
 ```bash
 # Correctness against C reference
-cargo test -p opus --test correctness_vs_c
+cargo test --test correctness_vs_c
 
-# Full test suite (requires C submodule: git submodule update --init)
-cargo test -p opus
+# Full library test suite (requires C submodule: git submodule update --init)
+cargo test
 
-# DNN model tests (requires dnn feature + weights)
-cargo test -p opus --features dnn
+# Including DNN tests (downloads ~16 MB of model weights on first build)
+cargo test --all-features
 
 # Benchmarks (Rust vs C reference)
-cargo bench -p opus
+cargo bench
+cargo bench --features dnn   # include DNN microbenchmarks
 ```
 
 
 ## Project Structure
 
+Single-crate layout. Codec subsystems live as modules under `src/`; `opus-ffi`
+is the only sibling crate and exists solely for cross-validation against C
+libopus.
+
 ```
+src/
+  range_coder/   Arithmetic entropy coder shared by SILK and CELT
+  silk/          SILK codec — decoder + float encoder
+  celt/          CELT codec — decoder + encoder
+  dnn/           DRED, FARGAN, PitchDNN, OSCE (gated by dnn-* features)
+  encoder.rs decoder.rs multistream.rs repacketizer.rs ...   Public facade
 crates/
-  opus/              Main facade — encoder, decoder, multistream, repacketizer
-  opus-silk/         SILK codec — decoder + float encoder
-  opus-celt/         CELT codec — decoder + encoder
-  opus-range-coder/  Arithmetic entropy coder shared by SILK and CELT
-  opus-dnn/          DNN models — DRED, FARGAN, PitchDNN, OSCE (LACE/NoLACE)
-  opus-ffi/          C libopus FFI bindings (unsafe, for testing only)
+  opus-ffi/      C libopus FFI bindings (unsafe, dev-dependency for tests)
 ```
 
 

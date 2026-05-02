@@ -6,13 +6,14 @@ resolver = "3"
 
 [package]
 name = "opus"
-version = "2.2.2"
+version = "3.0.0"
 edition = "2024"
 description = "Opus audio codec decoder in pure Rust"
 keywords = ["audio", "codec", "VoIP", "streaming"]
 categories = ["multimedia::encoding", "multimedia::audio"]
 repository = "https://github.com/chastabor/opus-rust"
 readme = "README.md"
+license = "COPYING"
 
 [features]
 default = []
@@ -24,7 +25,7 @@ dnn-osce     = []
 [dependencies]
 
 [dev-dependencies]
-opus-ffi = { version = "2.2.2", path = "crates/opus-ffi" }
+opus-ffi = { version = "3.0.0", path = "crates/opus-ffi" }
 criterion = { version = "0.5", features = ["html_reports"] }
 
 [lints.rust]
