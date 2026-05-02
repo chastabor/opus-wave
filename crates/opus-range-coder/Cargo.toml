@@ -1,8 +1,9 @@
 [package]
 name = "opus-range-coder"
-version = "1.0.0"
+version = "2.2.2"
 edition = "2024"
 description = "Range coder for Opus audio codec"
+publish = false
 
 [dev-dependencies]
 

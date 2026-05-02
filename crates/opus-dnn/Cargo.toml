@@ -1,9 +1,10 @@
 [package]
 name = "opus-dnn"
-version = "1.0.0"
+version = "2.2.2"
 edition = "2024"
 description = "DNN inference runtime for Opus audio codec (DRED, OSCE, deep PLC)"
 license = "BSD-3-Clause"
+publish = false
 
 [features]
 default = ["dred", "osce", "deep-plc"]
@@ -12,8 +13,8 @@ dred = ["deep-plc"]
 osce = []
 
 [dependencies]
-opus-celt = { path = "../opus-celt" }
-opus-range-coder = { path = "../opus-range-coder" }
+opus-celt = { version = "2.2.2", path = "../opus-celt" }
+opus-range-coder = { version = "2.2.2", path = "../opus-range-coder" }
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }

@@ -1,11 +1,12 @@
 [package]
 name = "opus-celt"
-version = "1.0.0"
+version = "2.2.2"
 edition = "2024"
 description = "CELT decoder for Opus audio codec"
+publish = false
 
 [dependencies]
-opus-range-coder = { path = "../opus-range-coder" }
+opus-range-coder = { version = "2.2.2", path = "../opus-range-coder" }
 
 [lints.rust]
 unsafe-code = "forbid"

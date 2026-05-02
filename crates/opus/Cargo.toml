@@ -1,6 +1,6 @@
 [package]
 name = "opus"
-version = "2.2.1"
+version = "2.2.2"
 edition = "2024"
 description = "Opus audio codec decoder in pure Rust"
 keywords = ["audio", "codec", "VoIP", "streaming"]
@@ -13,14 +13,14 @@ default = []
 dnn = ["dep:opus-dnn"]
 
 [dependencies]
-opus-range-coder = { path = "../opus-range-coder" }
-opus-celt = { path = "../opus-celt" }
-opus-silk = { path = "../opus-silk" }
-opus-dnn = { path = "../opus-dnn", optional = true }
+opus-range-coder = { version = "2.2.2", path = "../opus-range-coder" }
+opus-celt = { version = "2.2.2", path = "../opus-celt" }
+opus-silk = { version = "2.2.2", path = "../opus-silk" }
+opus-dnn = { version = "2.2.2", path = "../opus-dnn", optional = true }
 
 [dev-dependencies]
-opus-ffi = { path = "../opus-ffi" }
-opus-dnn = { path = "../opus-dnn" }
+opus-ffi = { version = "2.2.2", path = "../opus-ffi" }
+opus-dnn = { version = "2.2.2", path = "../opus-dnn" }
 criterion = { version = "0.5", features = ["html_reports"] }
 
 [lints.rust]
