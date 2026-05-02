@@ -1,8 +1,12 @@
 [package]
 name = "opus"
-version = "2.2.0"
+version = "2.2.1"
 edition = "2024"
 description = "Opus audio codec decoder in pure Rust"
+keywords = ["audio", "codec", "VoIP", "streaming"]
+categories = ["multimedia::encoding", "multimedia::audio"]
+repository = "https://github.com/chastabor/opus-rust"
+readme = "README.md"
 
 [features]
 default = []
