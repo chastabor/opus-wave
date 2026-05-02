@@ -2,9 +2,9 @@
 //! Pinpoints numerical divergence in the LPC→NLSF→encode pipeline.
 
 use opus_ffi::{c_silk_a2nlsf, c_silk_nlsf_encode_wb, c_silk_nlsf_vq_weights_laroia};
-use opus::silk::lpc_analysis::{silk_a2nlsf, silk_nlsf_vq_weights_laroia};
-use opus::silk::nlsf_encode::silk_nlsf_encode;
-use opus::silk::{NlsfCbSel, get_nlsf_cb};
+use opus_rust::silk::lpc_analysis::{silk_a2nlsf, silk_nlsf_vq_weights_laroia};
+use opus_rust::silk::nlsf_encode::silk_nlsf_encode;
+use opus_rust::silk::{NlsfCbSel, get_nlsf_cb};
 
 const ORDER: usize = 16;
 

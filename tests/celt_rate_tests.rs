@@ -1,8 +1,8 @@
 //! Cross-validation tests for CELT rate allocation functions.
 //! bits2pulses, pulses2bits, init_caps — all exact-match (integer functions).
 
-use opus::celt::mode::CeltMode;
-use opus::celt::rate;
+use opus_rust::celt::mode::CeltMode;
+use opus_rust::celt::rate;
 use opus_ffi::*;
 
 // ══════════════════════════════════════════════════════════════════════

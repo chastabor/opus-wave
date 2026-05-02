@@ -7,11 +7,11 @@
 
 mod common;
 
-use opus::dnn::nnet::Activation;
-use opus::dnn::nnet::LinearLayer;
-use opus::dnn::nnet::activations::compute_activation;
-use opus::dnn::nnet::linear::compute_linear;
-use opus::dnn::nnet::ops::{compute_generic_dense, compute_generic_gru};
+use opus_rust::dnn::nnet::Activation;
+use opus_rust::dnn::nnet::LinearLayer;
+use opus_rust::dnn::nnet::activations::compute_activation;
+use opus_rust::dnn::nnet::linear::compute_linear;
+use opus_rust::dnn::nnet::ops::{compute_generic_dense, compute_generic_gru};
 
 use common::assert_f32_slice_close as assert_close;
 

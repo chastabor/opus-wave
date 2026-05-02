@@ -21,7 +21,7 @@
 //       /home/ct37/projects/opus/build/libopus.a -lm
 //   /tmp/gen_lbrr_vectors > /tmp/lbrr_vectors.txt
 
-use opus::{
+use opus_rust::{
     Application, Bandwidth, Bitrate, Channels, Mode, OpusDecoder, OpusEncoder, SampleRate,
     opus_packet_get_bandwidth, opus_packet_get_mode,
 };

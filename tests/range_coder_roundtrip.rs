@@ -1,4 +1,4 @@
-use opus::range_coder::EcCtx;
+use opus_rust::range_coder::EcCtx;
 
 /// Helper: encode, finalize, and return the full buffer for decoding.
 /// After enc_done(), the buffer contains range-coded bytes at the front

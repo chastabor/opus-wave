@@ -7,7 +7,7 @@
 mod common;
 
 use common::{gen_sine, gen_stereo_sine};
-use opus::{
+use opus_rust::{
     Application, Bandwidth, Bitrate, Channels, ForceChannels, OpusDecoder, OpusEncoder, SampleRate,
 };
 use opus_ffi::{COpusDecoder, COpusEncoder};

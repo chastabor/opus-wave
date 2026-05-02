@@ -3,8 +3,8 @@
 //! output to the C wrappers for realistic LPC/NLSF inputs.
 
 use opus_ffi::*;
-use opus::silk::encoder_flp::wrappers::*;
-use opus::silk::lpc_analysis::silk_burg_modified_flp;
+use opus_rust::silk::encoder_flp::wrappers::*;
+use opus_rust::silk::lpc_analysis::silk_burg_modified_flp;
 
 const ORDER: usize = 16;
 

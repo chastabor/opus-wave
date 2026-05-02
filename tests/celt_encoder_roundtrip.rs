@@ -1,7 +1,7 @@
 // CELT encoder roundtrip tests: encode → decode → re-encode → re-decode
 // Verifies energy preservation and packet size consistency.
 
-use opus::celt::{CeltDecoder, CeltEncoder};
+use opus_rust::celt::{CeltDecoder, CeltEncoder};
 
 const FRAME_SIZE: usize = 960;
 

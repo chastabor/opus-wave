@@ -1,6 +1,6 @@
 //! Shared benchmark configurations and signal generation.
 
-use opus::{Application, Bandwidth, Channels, SampleRate};
+use opus_rust::{Application, Bandwidth, Channels, SampleRate};
 
 pub const SAMPLE_RATE: SampleRate = SampleRate::Hz48000;
 pub const FRAME_SIZE: i32 = 960; // 20ms at 48kHz

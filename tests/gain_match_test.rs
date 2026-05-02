@@ -6,7 +6,7 @@
 mod common;
 
 use common::{gen_sine, rms};
-use opus::{Application, Bitrate, Channels, OpusDecoder, OpusEncoder, SampleRate};
+use opus_rust::{Application, Bitrate, Channels, OpusDecoder, OpusEncoder, SampleRate};
 use opus_ffi::{COpusDecoder, COpusEncoder};
 
 const SAMPLE_RATE: i32 = 48000;

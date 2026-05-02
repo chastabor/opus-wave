@@ -1,7 +1,7 @@
 //! Cross-validation tests: decode the same packets with both C reference
 //! and our Rust decoder, compare PCM output sample-by-sample.
 
-use opus::{Channels, OpusDecoder, OpusMSDecoder, SampleRate};
+use opus_rust::{Channels, OpusDecoder, OpusMSDecoder, SampleRate};
 use std::path::Path;
 
 const VECTORS_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/crates/opus-ffi/tests/vectors");

@@ -19,7 +19,7 @@ mod common;
 //       /home/ct37/projects/opus/build/libopus.a -lm
 //   /tmp/gen_pitch_vectors > /tmp/pitch_vectors.txt
 
-use opus::{
+use opus_rust::{
     Application, Bandwidth, Bitrate, Channels, Mode, OpusDecoder, OpusEncoder, SampleRate,
     opus_packet_get_bandwidth, opus_packet_get_mode,
 };

@@ -5,10 +5,10 @@
 mod common;
 
 use opus_ffi::*;
-use opus::silk::encoder_flp::find_ltp::silk_ltp_analysis_filter_flp;
-use opus::silk::gain_quant;
-use opus::silk::nlsf;
-use opus::silk::*;
+use opus_rust::silk::encoder_flp::find_ltp::silk_ltp_analysis_filter_flp;
+use opus_rust::silk::gain_quant;
+use opus_rust::silk::nlsf;
+use opus_rust::silk::*;
 
 fn gen_sine_f32(len: usize, freq: f32, fs: f32, amp: f32) -> Vec<f32> {
     (0..len)
@@ -307,7 +307,7 @@ fn make_sine_f32(fs: i32) -> Vec<f32> {
 fn encode_indices_pulses_decodable_by_c() {
     // Rust encoder → C decoder: verifies encode_indices + encode_pulses
     // produce a valid bitstream that the C reference can decode
-    use opus::{Application, Bitrate, Channels, OpusEncoder, SampleRate};
+    use opus_rust::{Application, Bitrate, Channels, OpusEncoder, SampleRate};
 
     let fs = 16000;
     let mut r_enc =
@@ -348,7 +348,7 @@ fn encode_indices_pulses_decodable_by_c() {
 #[test]
 fn nsq_output_decodable_by_c() {
     // Tests NSQ with low complexity (non-del-dec path, silk_NSQ_c)
-    use opus::{Application, Bitrate, Channels, OpusEncoder, SampleRate};
+    use opus_rust::{Application, Bitrate, Channels, OpusEncoder, SampleRate};
 
     let fs = 16000;
     let mut r_enc =
@@ -386,7 +386,7 @@ fn nsq_output_decodable_by_c() {
 fn c_encoder_output_decodable_by_rust() {
     // C encoder → Rust decoder: verifies Rust decoder handles C's
     // encode_indices + encode_pulses + NSQ output
-    use opus::{Channels, OpusDecoder, SampleRate};
+    use opus_rust::{Channels, OpusDecoder, SampleRate};
 
     let fs = 16000;
     let mut c_enc = COpusEncoder::new(fs, 1, opus_ffi::OPUS_APPLICATION_VOIP).unwrap();
@@ -421,7 +421,7 @@ fn c_encoder_output_decodable_by_rust() {
 fn vad_produces_speech_activity() {
     // Both C and Rust should detect a 440Hz sine as speech (not silence)
     // VAD (1h) is implicitly tested: if VAD fails, encoder produces no output
-    use opus::{Application, Bitrate, Channels, OpusEncoder, SampleRate};
+    use opus_rust::{Application, Bitrate, Channels, OpusEncoder, SampleRate};
 
     let fs = 16000;
     let mut r_enc =
