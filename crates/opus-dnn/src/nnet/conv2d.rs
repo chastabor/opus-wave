@@ -1,5 +1,5 @@
-use super::{Activation, Conv2dLayer};
 use super::activations::compute_activation;
+use super::{Activation, Conv2dLayer};
 
 const MAX_CONV2D_INPUTS: usize = 8192;
 
@@ -28,9 +28,11 @@ fn conv2d_float(
         for m in 0..in_channels {
             for t in 0..ktime {
                 for h in 0..kheight {
-                    let w = weights[i * in_channels * ktime * kheight + m * ktime * kheight + t * kheight + h];
+                    let w = weights
+                        [i * in_channels * ktime * kheight + m * ktime * kheight + t * kheight + h];
                     for j in 0..height {
-                        out[i * hstride + j] += w * input[t * in_channels * in_stride + m * in_stride + j + h];
+                        out[i * hstride + j] +=
+                            w * input[t * in_channels * in_stride + m * in_stride + j + h];
                     }
                 }
             }
@@ -62,16 +64,15 @@ fn conv2d_3x3_float(
             let in1 = in_channels * in_stride + m * in_stride;
             let in2 = 2 * in_channels * in_stride + m * in_stride;
             for j in 0..height {
-                out[i * hstride + j] +=
-                    weights[wbase    ] * input[in0 + j    ]
-                  + weights[wbase + 1] * input[in0 + j + 1]
-                  + weights[wbase + 2] * input[in0 + j + 2]
-                  + weights[wbase + 3] * input[in1 + j    ]
-                  + weights[wbase + 4] * input[in1 + j + 1]
-                  + weights[wbase + 5] * input[in1 + j + 2]
-                  + weights[wbase + 6] * input[in2 + j    ]
-                  + weights[wbase + 7] * input[in2 + j + 1]
-                  + weights[wbase + 8] * input[in2 + j + 2];
+                out[i * hstride + j] += weights[wbase] * input[in0 + j]
+                    + weights[wbase + 1] * input[in0 + j + 1]
+                    + weights[wbase + 2] * input[in0 + j + 2]
+                    + weights[wbase + 3] * input[in1 + j]
+                    + weights[wbase + 4] * input[in1 + j + 1]
+                    + weights[wbase + 5] * input[in1 + j + 2]
+                    + weights[wbase + 6] * input[in2 + j]
+                    + weights[wbase + 7] * input[in2 + j + 1]
+                    + weights[wbase + 8] * input[in2 + j + 2];
             }
         }
     }
@@ -92,7 +93,10 @@ pub fn compute_conv2d(
     hstride: usize,
     activation: Activation,
 ) {
-    let weights = conv.float_weights.as_ref().expect("conv2d requires float_weights");
+    let weights = conv
+        .float_weights
+        .as_ref()
+        .expect("conv2d requires float_weights");
     let time_stride = conv.in_channels * (height + conv.kheight - 1);
     debug_assert!(conv.ktime * time_stride <= MAX_CONV2D_INPUTS);
 
@@ -107,9 +111,27 @@ pub fn compute_conv2d(
 
     // Dispatch to specialized or generic convolution.
     if conv.kheight == 3 && conv.ktime == 3 {
-        conv2d_3x3_float(out, weights, conv.in_channels, conv.out_channels, &in_buf[..buf_size], height, hstride);
+        conv2d_3x3_float(
+            out,
+            weights,
+            conv.in_channels,
+            conv.out_channels,
+            &in_buf[..buf_size],
+            height,
+            hstride,
+        );
     } else {
-        conv2d_float(out, weights, conv.in_channels, conv.out_channels, conv.ktime, conv.kheight, &in_buf[..buf_size], height, hstride);
+        conv2d_float(
+            out,
+            weights,
+            conv.in_channels,
+            conv.out_channels,
+            conv.ktime,
+            conv.kheight,
+            &in_buf[..buf_size],
+            height,
+            hstride,
+        );
     }
 
     // Add bias.

@@ -17,7 +17,6 @@ use std::process::Command;
 
 include!("tools/parse_c_weights.rs");
 
-
 const MODEL_HASH: &str = "a5177ec6fb7d15058e99e57029746100121f68e4890b1467d4094aa336b6013e";
 const MODEL_URL: &str = "https://media.xiph.org/opus/models";
 
@@ -130,8 +129,16 @@ fn main() {
                 ("fargan_data.c", "fargan.bin", "fargan_arrays"),
                 ("lace_data.c", "lace.bin", "lacelayers_arrays"),
                 ("nolace_data.c", "nolace.bin", "nolacelayers_arrays"),
-                ("dred_rdovae_enc_data.c", "rdovae_enc.bin", "rdovaeenc_arrays"),
-                ("dred_rdovae_dec_data.c", "rdovae_dec.bin", "rdovaedec_arrays"),
+                (
+                    "dred_rdovae_enc_data.c",
+                    "rdovae_enc.bin",
+                    "rdovaeenc_arrays",
+                ),
+                (
+                    "dred_rdovae_dec_data.c",
+                    "rdovae_dec.bin",
+                    "rdovaedec_arrays",
+                ),
                 ("bbwenet_data.c", "bbwenet.bin", "bbwenetlayers_arrays"),
             ];
 

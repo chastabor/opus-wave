@@ -4,15 +4,19 @@
 //! The compute cost is data-independent (matrix multiply timing does not depend on values).
 
 use criterion::{Criterion, criterion_group, criterion_main};
-use opus_dnn::nnet::{Activation, LinearLayer};
 use opus_dnn::nnet::activations::compute_activation;
 use opus_dnn::nnet::linear::compute_linear;
-use opus_dnn::nnet::ops::{compute_generic_dense, compute_generic_gru, compute_glu, compute_generic_conv1d};
+use opus_dnn::nnet::ops::{
+    compute_generic_conv1d, compute_generic_dense, compute_generic_gru, compute_glu,
+};
+use opus_dnn::nnet::{Activation, LinearLayer};
 
 /// Simple LCG for reproducible random test data.
 struct Rng(u32);
 impl Rng {
-    fn new(seed: u32) -> Self { Rng(seed) }
+    fn new(seed: u32) -> Self {
+        Rng(seed)
+    }
     fn next_f32(&mut self) -> f32 {
         self.0 = self.0.wrapping_mul(1103515245).wrapping_add(12345);
         ((self.0 >> 16) as f32 / 32768.0) - 1.0
@@ -189,7 +193,14 @@ fn bench_conv1d(c: &mut Criterion) {
     group.bench_function("conv1d_384x128_lace", |b| {
         let mut out = vec![0.0f32; nb_outputs];
         b.iter(|| {
-            compute_generic_conv1d(&conv_layer, &mut out, &mut mem, &input_384, input_size, Activation::Tanh);
+            compute_generic_conv1d(
+                &conv_layer,
+                &mut out,
+                &mut mem,
+                &input_384,
+                input_size,
+                Activation::Tanh,
+            );
         });
     });
 
@@ -237,37 +248,39 @@ fn bench_model_weights(c: &mut Criterion) {
     let mut group = c.benchmark_group("model_weights");
 
     // PitchDNN: load weights + init + inference
-    if let Some(arrays) = load_blob("pitchdnn.bin") {
-        if let Ok(model) = opus_dnn::pitchdnn::init_pitchdnn(&arrays) {
-            let gru_n = model.gru_1_recurrent.nb_inputs;
-            let mut state = opus_dnn::pitchdnn::PitchDnnState {
-                model,
-                gru_state: vec![0.0f32; gru_n],
-                xcorr_mem1: vec![0.0f32; (opus_dnn::pitchdnn::NB_XCORR_FEATURES + 2) * 16],
-                xcorr_mem2: vec![0.0f32; (opus_dnn::pitchdnn::NB_XCORR_FEATURES + 2) * 16],
-            };
-            let mut rng = Rng::new(42);
-            let if_features = rng.vec_f32(opus_dnn::pitchdnn::NB_IF_FEATURES);
-            let xcorr_features = rng.vec_f32(opus_dnn::pitchdnn::NB_XCORR_FEATURES);
-            group.bench_function("pitchdnn_compute", |b| {
-                b.iter(|| opus_dnn::pitchdnn::compute_pitchdnn(&mut state, &if_features, &xcorr_features));
+    if let Some(arrays) = load_blob("pitchdnn.bin")
+        && let Ok(model) = opus_dnn::pitchdnn::init_pitchdnn(&arrays)
+    {
+        let gru_n = model.gru_1_recurrent.nb_inputs;
+        let mut state = opus_dnn::pitchdnn::PitchDnnState {
+            model,
+            gru_state: vec![0.0f32; gru_n],
+            xcorr_mem1: vec![0.0f32; (opus_dnn::pitchdnn::NB_XCORR_FEATURES + 2) * 16],
+            xcorr_mem2: vec![0.0f32; (opus_dnn::pitchdnn::NB_XCORR_FEATURES + 2) * 16],
+        };
+        let mut rng = Rng::new(42);
+        let if_features = rng.vec_f32(opus_dnn::pitchdnn::NB_IF_FEATURES);
+        let xcorr_features = rng.vec_f32(opus_dnn::pitchdnn::NB_XCORR_FEATURES);
+        group.bench_function("pitchdnn_compute", |b| {
+            b.iter(|| {
+                opus_dnn::pitchdnn::compute_pitchdnn(&mut state, &if_features, &xcorr_features)
             });
-        }
+        });
     }
 
     // FARGAN: linear layers with actual int8 weights
-    if let Some(arrays) = load_blob("fargan.bin") {
-        if let Ok(model) = opus_dnn::fargan::init_fargan(&arrays) {
-            let mut rng = Rng::new(99);
-            // Benchmark the conditioning network dense layer
-            let cond_in = model.cond_net_fconv1.nb_inputs;
-            let cond_out = model.cond_net_fconv1.nb_outputs;
-            let input = rng.vec_f32(cond_in);
-            group.bench_function("fargan_cond_fconv1_int8", |b| {
-                let mut out = vec![0.0f32; cond_out];
-                b.iter(|| compute_linear(&model.cond_net_fconv1, &mut out, &input));
-            });
-        }
+    if let Some(arrays) = load_blob("fargan.bin")
+        && let Ok(model) = opus_dnn::fargan::init_fargan(&arrays)
+    {
+        let mut rng = Rng::new(99);
+        // Benchmark the conditioning network dense layer
+        let cond_in = model.cond_net_fconv1.nb_inputs;
+        let cond_out = model.cond_net_fconv1.nb_outputs;
+        let input = rng.vec_f32(cond_in);
+        group.bench_function("fargan_cond_fconv1_int8", |b| {
+            let mut out = vec![0.0f32; cond_out];
+            b.iter(|| compute_linear(&model.cond_net_fconv1, &mut out, &input));
+        });
     }
 
     // LACE: load + init

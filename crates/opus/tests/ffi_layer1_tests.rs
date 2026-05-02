@@ -212,7 +212,7 @@ fn ltp_analysis_filter_voiced() {
 
     let mut b = [0.0f32; MAX_NB_SUBFR * LTP_ORDER];
     for k in 0..nb_subfr {
-        b[k * LTP_ORDER + 0] = 0.05;
+        b[k * LTP_ORDER] = 0.05;
         b[k * LTP_ORDER + 1] = 0.1;
         b[k * LTP_ORDER + 2] = 0.6;
         b[k * LTP_ORDER + 3] = 0.15;

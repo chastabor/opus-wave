@@ -37,7 +37,7 @@ fn read_packets(path: &Path) -> Vec<Vec<u8>> {
 /// Read a .pcm file as f32 samples (native endian from C)
 fn read_pcm_f32(path: &Path) -> Vec<f32> {
     let data = std::fs::read(path).expect("Cannot read pcm file");
-    assert!(data.len() % 4 == 0);
+    assert!(data.len().is_multiple_of(4));
     data.chunks_exact(4)
         .map(|chunk| f32::from_le_bytes(chunk.try_into().unwrap()))
         .collect()
@@ -144,7 +144,7 @@ fn first_divergence_detail(
     for i in 0..n {
         let err = (ref_pcm[i] as f64 - rust_pcm[i] as f64).abs();
         if err > threshold {
-            let start = if i >= 3 { i - 3 } else { 0 };
+            let start = i.saturating_sub(3);
             let end = (i + 4).min(n);
             let sample_in_frame = (i / channels) % FRAME_SIZE;
             let frame_idx = (i / channels) / FRAME_SIZE;

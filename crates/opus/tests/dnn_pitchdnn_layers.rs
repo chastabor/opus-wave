@@ -46,12 +46,17 @@ fn test_tanh_rcp_ps_divergence() {
     let mean_diff = sum_diff / n as f64;
 
     eprintln!("tanh rcp_ps divergence ({n} elements):");
-    eprintln!("  max_diff = {max_diff:.6e} at [{max_idx}] (input={:.4})", input[max_idx]);
+    eprintln!(
+        "  max_diff = {max_diff:.6e} at [{max_idx}] (input={:.4})",
+        input[max_idx]
+    );
     eprintln!("  mean_diff = {mean_diff:.6e}");
 
     // Per-element error should be < 3e-4 (rcp_ps precision)
-    assert!(max_diff < 3e-4,
-            "tanh per-element diff {max_diff} exceeds rcp_ps precision bound 3e-4");
+    assert!(
+        max_diff < 3e-4,
+        "tanh per-element diff {max_diff} exceeds rcp_ps precision bound 3e-4"
+    );
 }
 
 /// Prove: the sigmoid also diverges by the same rcp_ps mechanism.
@@ -73,15 +78,19 @@ fn test_sigmoid_rcp_ps_divergence() {
     let mut max_diff = 0.0f32;
     for i in 0..n {
         let d = (rust_out[i] - c_out[i]).abs();
-        if d > max_diff { max_diff = d; }
+        if d > max_diff {
+            max_diff = d;
+        }
     }
     eprintln!("sigmoid rcp_ps divergence: max_diff = {max_diff:.6e}");
 
     // sigmoid uses the same rcp_ps path (sigmoid = 0.5 + 0.5*tanh(0.5*x))
     // C SSE2 uses a DIFFERENT formula: direct rational approx with rcp_ps
     // Per-element error should be < 3e-4
-    assert!(max_diff < 3e-4,
-            "sigmoid per-element diff {max_diff} exceeds rcp_ps precision bound 3e-4");
+    assert!(
+        max_diff < 3e-4,
+        "sigmoid per-element diff {max_diff} exceeds rcp_ps precision bound 3e-4"
+    );
 }
 
 /// Compare the first PitchDNN dense layer (dense_if_upsampler_1 + tanh)
@@ -118,20 +127,28 @@ fn test_pitchdnn_first_layer_vs_c() {
         &blob,
         "dense_if_upsampler_1_bias",
         "dense_if_upsampler_1_weights_float",
-        &mut c_out, &input,
-        nb_inputs, nb_outputs,
+        &mut c_out,
+        &input,
+        nb_inputs,
+        nb_outputs,
     );
 
     let mut max_diff = 0.0f32;
     let mut max_idx = 0;
     for i in 0..nb_outputs {
         let d = (rust_out[i] - c_out[i]).abs();
-        if d > max_diff { max_diff = d; max_idx = i; }
+        if d > max_diff {
+            max_diff = d;
+            max_idx = i;
+        }
     }
 
     eprintln!("PitchDNN layer 0 (dense_if_up1 {nb_inputs}x{nb_outputs} + tanh):");
     eprintln!("  max_diff = {max_diff:.6e} at [{max_idx}]");
-    eprintln!("  rust[{max_idx}] = {:.6}, c[{max_idx}] = {:.6}", rust_out[max_idx], c_out[max_idx]);
+    eprintln!(
+        "  rust[{max_idx}] = {:.6}, c[{max_idx}] = {:.6}",
+        rust_out[max_idx], c_out[max_idx]
+    );
     // Spot check: are the first few outputs similar in sign at least?
     eprintln!("  rust[0..4] = {:?}", &rust_out[..4.min(nb_outputs)]);
     eprintln!("  c[0..4]    = {:?}", &c_out[..4.min(nb_outputs)]);
@@ -149,17 +166,29 @@ fn test_pitchdnn_first_layer_vs_c() {
     let mut c_linear = vec![0.0f32; nb_outputs];
 
     opus_dnn::nnet::linear::compute_linear(&model.dense_if_upsampler_1, &mut rust_linear, &input);
-    opus_ffi::c_compute_linear(&mut c_linear, fw, effective_bias, nb_inputs, nb_outputs, &input);
+    opus_ffi::c_compute_linear(
+        &mut c_linear,
+        fw,
+        effective_bias,
+        nb_inputs,
+        nb_outputs,
+        &input,
+    );
 
     let (linear_diff, linear_idx) = common::max_abs_diff(&rust_linear, &c_linear);
     eprintln!("  Linear-only (same weights): max_diff = {linear_diff:.6e} at [{linear_idx}]");
-    eprintln!("  rust_linear[0..4] = {:?}", &rust_linear[..4.min(nb_outputs)]);
+    eprintln!(
+        "  rust_linear[0..4] = {:?}",
+        &rust_linear[..4.min(nb_outputs)]
+    );
     eprintln!("  c_linear[0..4]    = {:?}", &c_linear[..4.min(nb_outputs)]);
 
     // If the linear-only comparison is tight, the tanh diff is from rcp_ps.
     // If the linear-only comparison is also large, the weight data differs.
-    assert!(linear_diff < 1e-4,
-            "Linear-only (same Rust weights) diff {linear_diff} — sgemv mismatch!");
+    assert!(
+        linear_diff < 1e-4,
+        "Linear-only (same Rust weights) diff {linear_diff} — sgemv mismatch!"
+    );
 
     // The dense+tanh diff comes from rcp_ps in the C tanh implementation.
     // The sgemv is bit-identical (verified by the linear-only test above).
@@ -184,18 +213,23 @@ fn test_pitchdnn_error_accumulation_estimate() {
     let arrays = opus_dnn::nnet::weights::parse_weights(&blob).unwrap();
     let model = opus_dnn::pitchdnn::init_pitchdnn(&arrays).unwrap();
     let mut state = opus_dnn::pitchdnn::pitchdnn_state_init(model);
-    let rust_result = opus_dnn::pitchdnn::compute_pitchdnn(&mut state, &if_features, &xcorr_features);
+    let rust_result =
+        opus_dnn::pitchdnn::compute_pitchdnn(&mut state, &if_features, &xcorr_features);
 
     // Full C PitchDNN
     let c_result = opus_ffi::c_pitchdnn_compute(&blob, &if_features, &xcorr_features);
 
     let diff = (rust_result - c_result).abs();
 
-    eprintln!("PitchDNN total: rust={rust_result:.6}, c={c_result:.6}, diff={diff:.6} (arch={})",
-              std::env::consts::ARCH);
+    eprintln!(
+        "PitchDNN total: rust={rust_result:.6}, c={c_result:.6}, diff={diff:.6} (arch={})",
+        std::env::consts::ARCH
+    );
 
     // The total divergence is expected to be 0.2-0.8 due to rcp_ps accumulation.
     // This is NOT a logic bug — both implementations are correct within their precision.
-    assert!(diff < 1.0,
-            "Total PitchDNN divergence {diff} exceeds expected rcp_ps accumulation bound");
+    assert!(
+        diff < 1.0,
+        "Total PitchDNN divergence {diff} exceeds expected rcp_ps accumulation bound"
+    );
 }

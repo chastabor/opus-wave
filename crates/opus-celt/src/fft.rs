@@ -577,9 +577,9 @@ mod tests {
 
         let k = 10; // frequency bin
         let mut input = vec![KissFftCpx { r: 0.0, i: 0.0 }; n];
-        for i in 0..n {
+        for (i, slot) in input.iter_mut().enumerate() {
             let phase = 2.0 * pi * k as f64 * i as f64 / n as f64;
-            input[i].r = phase.cos() as f32;
+            slot.r = phase.cos() as f32;
         }
         let mut output = vec![KissFftCpx { r: 0.0, i: 0.0 }; n];
         opus_fft(&st, &input, &mut output);
@@ -626,9 +626,9 @@ mod tests {
         // 3. fft_impl
         // 4. conjugate
         let mut ifft_out = vec![KissFftCpx { r: 0.0, i: 0.0 }; n];
-        for i in 0..n {
+        for (i, &val) in fft_out.iter().enumerate() {
             let rev = st.bitrev[i];
-            ifft_out[rev] = fft_out[i];
+            ifft_out[rev] = val;
         }
         for c in ifft_out.iter_mut() {
             c.i = -c.i;
@@ -681,9 +681,9 @@ mod tests {
         let mut fft_out = vec![KissFftCpx { r: 0.0, i: 0.0 }; n];
         opus_fft(&st, &input, &mut fft_out);
         let mut ifft_out = vec![KissFftCpx { r: 0.0, i: 0.0 }; n];
-        for i in 0..n {
+        for (i, &val) in fft_out.iter().enumerate() {
             let rev = st.bitrev[i];
-            ifft_out[rev] = fft_out[i];
+            ifft_out[rev] = val;
         }
         for c in ifft_out.iter_mut() {
             c.i = -c.i;
@@ -718,9 +718,9 @@ mod tests {
         let mut fft_out = vec![KissFftCpx { r: 0.0, i: 0.0 }; n];
         opus_fft(&st, &input, &mut fft_out);
         let mut ifft_out = vec![KissFftCpx { r: 0.0, i: 0.0 }; n];
-        for i in 0..n {
+        for (i, &val) in fft_out.iter().enumerate() {
             let rev = st.bitrev[i];
-            ifft_out[rev] = fft_out[i];
+            ifft_out[rev] = val;
         }
         for c in ifft_out.iter_mut() {
             c.i = -c.i;

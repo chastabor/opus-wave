@@ -106,6 +106,7 @@ cargo clippy --workspace --tests --benches
 
 - **Match C structure.** Function and variable names follow the C reference where possible to ease cross-referencing. Do not rename for Rust idioms if it would make the C mapping unclear.
 - **Avoid premature abstraction.** The codec code is arithmetic-heavy and maps closely to the C reference. Prefer direct translation over Rust-idiomatic wrappers that obscure the algorithm.
+- **Idiomatic loops are fine.** Style lints like `needless_range_loop` should be fixed (use `iter().enumerate()`, `iter_mut().take(n).skip(m)`, etc.) rather than allowed crate-wide. The C-vs-Rust algorithm mapping remains clear with iterator forms; only the indexing form changes.
 - **Type-safe enums** (`Application`, `Bandwidth`, `Mode`, `SampleRate`, `Channels`, etc.) replace C magic constants at the public API boundary.
 
 ## Build requirements

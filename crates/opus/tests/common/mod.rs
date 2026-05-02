@@ -7,8 +7,8 @@ pub const SAMPLE_RATE: i32 = 48000;
 /// Generate a mono sine wave into `buf` at the given frequency and amplitude.
 /// `offset` is the sample offset for phase continuity across frames.
 pub fn gen_sine(buf: &mut [f32], offset: usize, freq: f32, amp: f32) {
-    for i in 0..buf.len() {
-        buf[i] = amp
+    for (i, sample) in buf.iter_mut().enumerate() {
+        *sample = amp
             * (2.0 * std::f32::consts::PI * freq * (i + offset) as f32 / SAMPLE_RATE as f32).sin();
     }
 }
@@ -144,7 +144,12 @@ pub fn load_dnn_blob(name: &str) -> Option<Vec<u8>> {
 
 /// Compute the max absolute difference between two slices, returning (max_diff, index).
 pub fn max_abs_diff(a: &[f32], b: &[f32]) -> (f32, usize) {
-    a.iter().zip(b).enumerate()
+    a.iter()
+        .zip(b)
+        .enumerate()
         .map(|(i, (x, y))| ((x - y).abs(), i))
-        .fold((0.0f32, 0), |(md, mi), (d, i)| if d > md { (d, i) } else { (md, mi) })
+        .fold(
+            (0.0f32, 0),
+            |(md, mi), (d, i)| if d > md { (d, i) } else { (md, mi) },
+        )
 }

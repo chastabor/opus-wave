@@ -55,7 +55,8 @@ fn frame_analysis(
     let mut x = [0.0f32; WINDOW_SIZE];
     x[..OVERLAP_SIZE].copy_from_slice(&st.analysis_mem);
     x[OVERLAP_SIZE..OVERLAP_SIZE + FRAME_SIZE].copy_from_slice(&input[..FRAME_SIZE]);
-    st.analysis_mem.copy_from_slice(&input[FRAME_SIZE - OVERLAP_SIZE..FRAME_SIZE]);
+    st.analysis_mem
+        .copy_from_slice(&input[FRAME_SIZE - OVERLAP_SIZE..FRAME_SIZE]);
     apply_window(&mut x);
     forward_transform(x_out, &x);
     lpcn_compute_band_energy(ex, x_out);
@@ -91,9 +92,8 @@ pub fn compute_frame_features(st: &mut LpcnetEncState, input: &[f32]) {
     const LP_A: [f32; 2] = [-1.54220, 0.70781];
 
     let mut aligned_in = [0.0f32; FRAME_SIZE];
-    aligned_in[..TRAINING_OFFSET].copy_from_slice(
-        &st.analysis_mem[OVERLAP_SIZE - TRAINING_OFFSET..OVERLAP_SIZE],
-    );
+    aligned_in[..TRAINING_OFFSET]
+        .copy_from_slice(&st.analysis_mem[OVERLAP_SIZE - TRAINING_OFFSET..OVERLAP_SIZE]);
 
     let mut x_fft = [KissFftCpx::default(); FREQ_SIZE];
     let mut ex = [0.0f32; NB_BANDS];
@@ -110,8 +110,7 @@ pub fn compute_frame_features(st: &mut LpcnetEncState, input: &[f32]) {
         st.if_features[3 * i - 2] = prod_r * norm_1;
         st.if_features[3 * i - 1] = prod_i * norm_1;
         st.if_features[3 * i] = ((1.0 / 64.0)
-            * (10.0 * opus_celt::mathops::celt_log10(1e-15 + xf.r * xf.r + xf.i * xf.i)
-                - 6.0))
+            * (10.0 * opus_celt::mathops::celt_log10(1e-15 + xf.r * xf.r + xf.i * xf.i) - 6.0))
             .clamp(-1.0, 1.0);
     }
     st.prev_if[..PITCH_IF_MAX_FREQ].copy_from_slice(&x_fft[..PITCH_IF_MAX_FREQ]);
@@ -131,7 +130,10 @@ pub fn compute_frame_features(st: &mut LpcnetEncState, input: &[f32]) {
     st.features[..NB_BANDS].copy_from_slice(&ceps);
     st.features[0] -= 4.0;
 
-    lpc_from_cepstrum(&mut st.lpc, <&[f32; NB_BANDS]>::try_from(&st.features[..NB_BANDS]).unwrap());
+    lpc_from_cepstrum(
+        &mut st.lpc,
+        <&[f32; NB_BANDS]>::try_from(&st.features[..NB_BANDS]).unwrap(),
+    );
     for i in 0..LPC_ORDER {
         st.features[NB_BANDS + 2 + i] = st.lpc[i];
     }
@@ -144,7 +146,8 @@ pub fn compute_frame_features(st: &mut LpcnetEncState, input: &[f32]) {
     let mut x_fir = [0.0f32; FRAME_SIZE + LPC_ORDER];
     x_fir[..LPC_ORDER].copy_from_slice(&st.pitch_mem);
     x_fir[LPC_ORDER..LPC_ORDER + FRAME_SIZE].copy_from_slice(&aligned_in);
-    st.pitch_mem.copy_from_slice(&aligned_in[FRAME_SIZE - LPC_ORDER..FRAME_SIZE]);
+    st.pitch_mem
+        .copy_from_slice(&aligned_in[FRAME_SIZE - LPC_ORDER..FRAME_SIZE]);
 
     // FIR LPC analysis filter (sign convention matches C lpcnet_enc.c)
     for i in 0..FRAME_SIZE {
@@ -163,25 +166,42 @@ pub fn compute_frame_features(st: &mut LpcnetEncState, input: &[f32]) {
     // Biquad LP filter (needs separate input/output buffers)
     let mut lp_tmp = [0.0f32; FRAME_SIZE];
     lp_tmp.copy_from_slice(&st.lp_buf[pm..pm + FRAME_SIZE]);
-    biquad(&mut st.lp_buf[pm..pm + FRAME_SIZE], &mut st.lp_mem, &lp_tmp, &LP_B, &LP_A, FRAME_SIZE);
+    biquad(
+        &mut st.lp_buf[pm..pm + FRAME_SIZE],
+        &mut st.lp_mem,
+        &lp_tmp,
+        &LP_B,
+        &LP_A,
+        FRAME_SIZE,
+    );
 
     // Pitch cross-correlation
     let buf = &st.exc_buf;
     let ener0: f32 = opus_celt::mathops::celt_inner_prod(&buf[pm..], &buf[pm..], FRAME_SIZE);
-    let mut ener1: f64 = opus_celt::mathops::celt_inner_prod(&buf[0..], &buf[0..], FRAME_SIZE) as f64;
+    let mut ener1: f64 =
+        opus_celt::mathops::celt_inner_prod(&buf[0..], &buf[0..], FRAME_SIZE) as f64;
 
     let mut xcorr = [0.0f32; PITCH_MAX_PERIOD];
-    opus_celt::pitch::celt_pitch_xcorr(&buf[pm..pm + FRAME_SIZE], buf, &mut xcorr, FRAME_SIZE, pm - PITCH_MIN_PERIOD);
+    opus_celt::pitch::celt_pitch_xcorr(
+        &buf[pm..pm + FRAME_SIZE],
+        buf,
+        &mut xcorr,
+        FRAME_SIZE,
+        pm - PITCH_MIN_PERIOD,
+    );
 
     let mut ener_norm = [0.0f32; PITCH_MAX_PERIOD - PITCH_MIN_PERIOD];
     for i in 0..PITCH_MAX_PERIOD - PITCH_MIN_PERIOD {
         let ener = 1.0 + ener0 as f64 + ener1;
         st.xcorr_features[i] = 2.0 * xcorr[i];
         ener_norm[i] = ener as f32;
-        ener1 += buf[i + FRAME_SIZE] as f64 * buf[i + FRAME_SIZE] as f64
-            - buf[i] as f64 * buf[i] as f64;
+        ener1 +=
+            buf[i + FRAME_SIZE] as f64 * buf[i + FRAME_SIZE] as f64 - buf[i] as f64 * buf[i] as f64;
     }
-    for (xf, en) in st.xcorr_features[..PITCH_MAX_PERIOD - PITCH_MIN_PERIOD].iter_mut().zip(ener_norm.iter()) {
+    for (xf, en) in st.xcorr_features[..PITCH_MAX_PERIOD - PITCH_MIN_PERIOD]
+        .iter_mut()
+        .zip(ener_norm.iter())
+    {
         *xf /= *en;
     }
 
@@ -203,10 +223,7 @@ pub fn compute_frame_features(st: &mut LpcnetEncState, input: &[f32]) {
 }
 
 /// Shared implementation for single-frame feature extraction.
-fn compute_single_frame_features_impl(
-    st: &mut LpcnetEncState,
-    x: &mut [f32; FRAME_SIZE],
-) {
+fn compute_single_frame_features_impl(st: &mut LpcnetEncState, x: &mut [f32; FRAME_SIZE]) {
     let input_copy = *x;
     preemphasis(x, &mut st.mem_preemph, &input_copy, PREEMPHASIS, FRAME_SIZE);
     compute_frame_features(st, x);

@@ -25,13 +25,9 @@ fn gen_sine(len: usize, freq: f32, fs: f32) -> Vec<f32> {
 /// Create a gain-normalized lpc_in_pre matching the C float encoder's unvoiced path.
 fn make_lpc_in_pre(signal: &[f32], gains: &[f32]) -> Vec<f32> {
     let mut lpc_in_pre = vec![0.0f32; NB_SUBFR * BURG_SUBFR];
-    for k in 0..NB_SUBFR {
-        let inv_gain = 1.0 / gains[k].max(1e-12);
-        let src_start = if k * SUBFR_LEN >= ORDER {
-            k * SUBFR_LEN - ORDER
-        } else {
-            0
-        };
+    for (k, &gain) in gains.iter().enumerate().take(NB_SUBFR) {
+        let inv_gain = 1.0 / gain.max(1e-12);
+        let src_start = (k * SUBFR_LEN).saturating_sub(ORDER);
         let dst_start = k * BURG_SUBFR;
         let copy_len = BURG_SUBFR.min(signal.len().saturating_sub(src_start));
         silk_scale_copy_vector_flp(
@@ -164,8 +160,8 @@ fn find_lpc_flp_with_interpolation() {
 
     // Simulate previous frame's NLSFs (uniformly spaced)
     let mut prev_nlsf = [0i16; ORDER];
-    for i in 0..ORDER {
-        prev_nlsf[i] = ((i + 1) as i32 * 32768 / (ORDER as i32 + 1)) as i16;
+    for (i, slot) in prev_nlsf.iter_mut().enumerate() {
+        *slot = ((i + 1) as i32 * 32768 / (ORDER as i32 + 1)) as i16;
     }
 
     let mut rust_nlsf = [0i16; ORDER];

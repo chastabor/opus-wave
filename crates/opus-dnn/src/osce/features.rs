@@ -1,9 +1,9 @@
-use std::sync::LazyLock;
 use opus_celt::fft::KissFftCpx;
+use std::sync::LazyLock;
 
-use crate::freq::{self, NB_BANDS, FREQ_SIZE};
 use super::config::*;
 use super::structs::OsceFeatureState;
+use crate::freq::{self, FREQ_SIZE, NB_BANDS};
 
 const OSCE_SPEC_WINDOW_SIZE: usize = 320;
 const OSCE_SPEC_NUM_FREQS: usize = 161;
@@ -90,12 +90,24 @@ static OSCE_WINDOW: LazyLock<[f32; OSCE_SPEC_WINDOW_SIZE]> = LazyLock::new(|| {
 });
 
 /// Apply triangular filterbank. Matches C `apply_filterbank`.
-fn apply_filterbank(x_out: &mut [f32], x_in: &[f32], center_bins: &[usize], band_weights: &[f32], num_bands: usize) {
+fn apply_filterbank(
+    x_out: &mut [f32],
+    x_in: &[f32],
+    center_bins: &[usize],
+    band_weights: &[f32],
+    num_bands: usize,
+) {
     x_out[0] = 0.0;
     for b in 0..num_bands - 1 {
         x_out[b + 1] = 0.0;
-        for (i, x_val) in x_in.iter().enumerate().take(center_bins[b + 1]).skip(center_bins[b]) {
-            let frac = (center_bins[b + 1] - i) as f32 / (center_bins[b + 1] - center_bins[b]) as f32;
+        for (i, x_val) in x_in
+            .iter()
+            .enumerate()
+            .take(center_bins[b + 1])
+            .skip(center_bins[b])
+        {
+            let frac =
+                (center_bins[b + 1] - i) as f32 / (center_bins[b + 1] - center_bins[b]) as f32;
             x_out[b] += band_weights[b] * frac * x_val;
             x_out[b + 1] += band_weights[b + 1] * (1.0 - frac) * x_val;
         }
@@ -108,7 +120,8 @@ fn mag_spec_320_onesided(out: &mut [f32], input: &[f32; OSCE_SPEC_WINDOW_SIZE]) 
     let mut fft_out = [KissFftCpx::default(); FREQ_SIZE];
     freq::forward_transform(&mut fft_out, input);
     for k in 0..OSCE_SPEC_NUM_FREQS {
-        out[k] = OSCE_SPEC_WINDOW_SIZE as f32 * (fft_out[k].r * fft_out[k].r + fft_out[k].i * fft_out[k].i).sqrt();
+        out[k] = OSCE_SPEC_WINDOW_SIZE as f32
+            * (fft_out[k].r * fft_out[k].r + fft_out[k].i * fft_out[k].i).sqrt();
     }
 }
 
@@ -128,7 +141,13 @@ fn calculate_log_spectrum_from_lpc(spec: &mut [f32], a_q12: &[i16], lpc_order: u
         inv_mag[i] = 1.0 / (mag[i] + 1e-9);
     }
 
-    apply_filterbank(spec, &inv_mag, &CENTER_BINS_CLEAN, &BAND_WEIGHTS_CLEAN, OSCE_CLEAN_SPEC_NUM_BANDS);
+    apply_filterbank(
+        spec,
+        &inv_mag,
+        &CENTER_BINS_CLEAN,
+        &BAND_WEIGHTS_CLEAN,
+        OSCE_CLEAN_SPEC_NUM_BANDS,
+    );
     for s in &mut spec[..OSCE_CLEAN_SPEC_NUM_BANDS] {
         *s = 0.3 * (*s + 1e-9).ln();
     }
@@ -149,7 +168,13 @@ fn calculate_cepstrum(cepstrum: &mut [f32], signal: &[f32]) {
     mag_spec_320_onesided(&mut mag, &buffer);
 
     let mut spec_buf = [0.0f32; OSCE_SPEC_WINDOW_SIZE];
-    apply_filterbank(&mut spec_buf[..OSCE_NOISY_SPEC_NUM_BANDS], &mag, &CENTER_BINS_NOISY, &BAND_WEIGHTS_NOISY, OSCE_NOISY_SPEC_NUM_BANDS);
+    apply_filterbank(
+        &mut spec_buf[..OSCE_NOISY_SPEC_NUM_BANDS],
+        &mag,
+        &CENTER_BINS_NOISY,
+        &BAND_WEIGHTS_NOISY,
+        OSCE_NOISY_SPEC_NUM_BANDS,
+    );
 
     for s in &mut spec_buf[..OSCE_NOISY_SPEC_NUM_BANDS] {
         *s = (*s + 1e-9).ln();
@@ -237,7 +262,9 @@ pub fn osce_calculate_features(
         let frame_start = OSCE_FEATURES_MAX_HISTORY + k * 80;
         let feat_base = k * OSCE_FEATURE_DIM;
 
-        for v in features[feat_base..feat_base + OSCE_FEATURE_DIM].iter_mut() { *v = 0.0; }
+        for v in features[feat_base..feat_base + OSCE_FEATURE_DIM].iter_mut() {
+            *v = 0.0;
+        }
 
         // Clean spectrum from LPC (update every other subframe)
         if k % 2 == 0 {
@@ -283,16 +310,20 @@ pub fn osce_calculate_features(
 
         // LTP coefficients
         for i in 0..OSCE_LTP_LENGTH {
-            features[feat_base + OSCE_LTP_START + i] = input.ltp_coef_q14[k * LTP_ORDER + i] as f32 / (1 << 14) as f32;
+            features[feat_base + OSCE_LTP_START + i] =
+                input.ltp_coef_q14[k * LTP_ORDER + i] as f32 / (1 << 14) as f32;
         }
 
         // Log gain
-        features[feat_base + OSCE_LOG_GAIN_START] = (input.gains_q16[k] as f32 / (1u32 << 16) as f32 + 1e-9).ln();
+        features[feat_base + OSCE_LOG_GAIN_START] =
+            (input.gains_q16[k] as f32 / (1u32 << 16) as f32 + 1e-9).ln();
     }
 
     // Update signal history
     let hist_start = num_samples;
-    state.signal_history.copy_from_slice(&buffer[hist_start..hist_start + OSCE_FEATURES_MAX_HISTORY]);
+    state
+        .signal_history
+        .copy_from_slice(&buffer[hist_start..hist_start + OSCE_FEATURES_MAX_HISTORY]);
 
     if state.reset {
         state.reset = false;

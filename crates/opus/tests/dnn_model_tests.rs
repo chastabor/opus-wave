@@ -27,7 +27,8 @@ fn test_pitchdnn_single_step_vs_c() {
     let xcorr_features = common::gen_random_vec(opus_dnn::pitchdnn::NB_XCORR_FEATURES, &mut seed);
 
     // Rust
-    let rust_result = opus_dnn::pitchdnn::compute_pitchdnn(&mut state, &if_features, &xcorr_features);
+    let rust_result =
+        opus_dnn::pitchdnn::compute_pitchdnn(&mut state, &if_features, &xcorr_features);
 
     // C
     let c_result = opus_ffi::c_pitchdnn_compute(&blob, &if_features, &xcorr_features);
@@ -70,12 +71,13 @@ fn test_pitchdnn_multi_step_vs_c() {
     }
 
     // C
-    let c_result = opus_ffi::c_pitchdnn_multi_step(
-        &blob, &if_seq, &xcorr_seq, nb_if, nb_xcorr, n_steps,
-    );
+    let c_result =
+        opus_ffi::c_pitchdnn_multi_step(&blob, &if_seq, &xcorr_seq, nb_if, nb_xcorr, n_steps);
 
     let diff = (rust_result - c_result).abs();
-    eprintln!("PitchDNN multi-step ({n_steps}): rust={rust_result:.6}, c={c_result:.6}, diff={diff:.6}");
+    eprintln!(
+        "PitchDNN multi-step ({n_steps}): rust={rust_result:.6}, c={c_result:.6}, diff={diff:.6}"
+    );
     assert!(
         diff < 1e-3,
         "PitchDNN multi-step mismatch after {n_steps} steps: rust={rust_result}, c={c_result}, diff={diff}"
@@ -106,19 +108,27 @@ fn test_rdovae_encode_single_frame_vs_c() {
     let mut rust_latents = vec![0.0f32; latent_dim];
     let mut rust_state = vec![0.0f32; state_dim];
     opus_dnn::dred::rdovae_enc::dred_rdovae_encode_dframe(
-        &mut enc_state, &model, &mut rust_latents, &mut rust_state, &input,
+        &mut enc_state,
+        &model,
+        &mut rust_latents,
+        &mut rust_state,
+        &input,
     );
 
     // C
-    let (c_latents, c_state) = opus_ffi::c_rdovae_encode_dframe(
-        &enc_blob, &input, latent_dim, state_dim,
-    ).expect("C RDOVAE encode failed");
+    let (c_latents, c_state) =
+        opus_ffi::c_rdovae_encode_dframe(&enc_blob, &input, latent_dim, state_dim)
+            .expect("C RDOVAE encode failed");
 
     // Report max diff for latents
-    let max_lat_diff = rust_latents.iter().zip(&c_latents)
+    let max_lat_diff = rust_latents
+        .iter()
+        .zip(&c_latents)
         .map(|(r, c)| (r - c).abs())
         .fold(0.0f32, f32::max);
-    let max_st_diff = rust_state.iter().zip(&c_state)
+    let max_st_diff = rust_state
+        .iter()
+        .zip(&c_state)
         .map(|(r, c)| (r - c).abs())
         .fold(0.0f32, f32::max);
     eprintln!("RDOVAE encode: latent max_diff={max_lat_diff:.4}, state max_diff={max_st_diff:.4}");
@@ -144,27 +154,40 @@ fn test_rdovae_decode_vs_c() {
 
     let mut seed = 99u32;
     // Small synthetic state and latents (scaled small for stability)
-    let state: Vec<f32> = common::gen_random_vec(state_dim, &mut seed).iter().map(|x| x * 0.1).collect();
-    let latents: Vec<f32> = common::gen_random_vec(latent_dim + 1, &mut seed).iter().map(|x| x * 0.1).collect();
+    let state: Vec<f32> = common::gen_random_vec(state_dim, &mut seed)
+        .iter()
+        .map(|x| x * 0.1)
+        .collect();
+    let latents: Vec<f32> = common::gen_random_vec(latent_dim + 1, &mut seed)
+        .iter()
+        .map(|x| x * 0.1)
+        .collect();
     let nb_latents = 1;
 
     // Rust decode
     let mut dec_state = opus_dnn::dred::rdovae_dec::rdovae_dec_state_init(&dec_model);
     let mut rust_features = vec![0.0f32; 4 * nb_latents * opus_dnn::dred::DRED_NUM_FEATURES];
     opus_dnn::dred::rdovae_dec::dred_rdovae_decode_all(
-        &mut dec_state, &dec_model, &mut rust_features,
-        &state, &latents, nb_latents, latent_dim,
+        &mut dec_state,
+        &dec_model,
+        &mut rust_features,
+        &state,
+        &latents,
+        nb_latents,
+        latent_dim,
     );
 
     // C decode
-    let c_features = opus_ffi::c_rdovae_decode_all(
-        &dec_blob, &state, &latents, nb_latents, output_dim,
-    ).expect("C RDOVAE decode failed");
+    let c_features =
+        opus_ffi::c_rdovae_decode_all(&dec_blob, &state, &latents, nb_latents, output_dim)
+            .expect("C RDOVAE decode failed");
 
     // Compare the first output_dim features (one decoded qframe output)
     let compare_len = output_dim.min(rust_features.len()).min(c_features.len());
     if compare_len > 0 {
-        let max_diff = rust_features[..compare_len].iter().zip(&c_features[..compare_len])
+        let max_diff = rust_features[..compare_len]
+            .iter()
+            .zip(&c_features[..compare_len])
             .map(|(r, c)| (r - c).abs())
             .fold(0.0f32, f32::max);
         eprintln!("RDOVAE decode: max_diff={max_diff:.4} over {compare_len} features");
@@ -199,7 +222,10 @@ fn test_fargan_c_only() {
     let result = opus_ffi::c_fargan_synthesize(&blob, &cont_pcm, &cont_features, &features);
     match result {
         Ok(pcm) => {
-            eprintln!("FARGAN C-only: pcm[0]={:.6}, pcm[80]={:.6}", pcm[0], pcm[80]);
+            eprintln!(
+                "FARGAN C-only: pcm[0]={:.6}, pcm[80]={:.6}",
+                pcm[0], pcm[80]
+            );
             assert_eq!(pcm.len(), 160);
         }
         Err(e) => {
@@ -235,7 +261,9 @@ fn test_fargan_single_frame_vs_c() {
     let c_pcm = opus_ffi::c_fargan_synthesize(&blob, &cont_pcm, &cont_features, &features)
         .expect("C FARGAN synthesize failed");
 
-    let max_diff = rust_pcm.iter().zip(&c_pcm)
+    let max_diff = rust_pcm
+        .iter()
+        .zip(&c_pcm)
         .map(|(r, c)| (r - c).abs())
         .fold(0.0f32, f32::max);
     eprintln!("FARGAN single frame: max_diff={max_diff:.6}");
@@ -277,13 +305,21 @@ fn test_fargan_multi_frame_vs_c() {
 
     // C
     let c_pcm = opus_ffi::c_fargan_synthesize_multi(
-        &blob, &cont_pcm, &cont_features, &features_seq, nb_features, n_frames,
-    ).expect("C FARGAN multi-frame synthesize failed");
+        &blob,
+        &cont_pcm,
+        &cont_features,
+        &features_seq,
+        nb_features,
+        n_frames,
+    )
+    .expect("C FARGAN multi-frame synthesize failed");
 
     for i in 0..n_frames {
         let start = i * opus_dnn::fargan::FARGAN_FRAME_SIZE;
         let end = start + opus_dnn::fargan::FARGAN_FRAME_SIZE;
-        let max_diff = rust_pcm[start..end].iter().zip(&c_pcm[start..end])
+        let max_diff = rust_pcm[start..end]
+            .iter()
+            .zip(&c_pcm[start..end])
             .map(|(r, c)| (r - c).abs())
             .fold(0.0f32, f32::max);
         eprintln!("FARGAN frame {i}: max_diff={max_diff:.6}");

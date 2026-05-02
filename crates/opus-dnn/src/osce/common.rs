@@ -1,8 +1,8 @@
 //! Shared OSCE types and functions used by both LACE and NoLACE.
 
-use crate::nnet::{Activation, LinearLayer};
-use crate::nnet::ops::{compute_generic_dense, compute_generic_gru, compute_generic_conv1d};
 use super::config::*;
+use crate::nnet::ops::{compute_generic_conv1d, compute_generic_dense, compute_generic_gru};
+use crate::nnet::{Activation, LinearLayer};
 
 const MAX_FEATURE_BUF: usize = 1024;
 
@@ -37,7 +37,14 @@ pub struct FeatureNetParams {
 }
 
 /// Sinusoidal numbits embedding matching C `compute_{lace,nolace}_numbits_embedding`.
-pub fn compute_numbits_embedding(out: &mut [f32], numbits: f32, dim: usize, log_low: f32, log_high: f32, scales: &[f32]) {
+pub fn compute_numbits_embedding(
+    out: &mut [f32],
+    numbits: f32,
+    dim: usize,
+    log_low: f32,
+    log_high: f32,
+    scales: &[f32],
+) {
     let log_numbits = numbits.ln();
     let mid = (log_high + log_low) * 0.5;
     let x = log_numbits.clamp(log_low, log_high) - mid;
@@ -65,8 +72,22 @@ pub fn osce_feature_net(
     let log_high = params.numbits_range_high.ln();
 
     let mut nb_emb = [0.0f32; 16];
-    compute_numbits_embedding(&mut nb_emb[..nd], numbits[0], nd, log_low, log_high, &params.numbits_scales);
-    compute_numbits_embedding(&mut nb_emb[nd..2 * nd], numbits[1], nd, log_low, log_high, &params.numbits_scales);
+    compute_numbits_embedding(
+        &mut nb_emb[..nd],
+        numbits[0],
+        nd,
+        log_low,
+        log_high,
+        &params.numbits_scales,
+    );
+    compute_numbits_embedding(
+        &mut nb_emb[nd..2 * nd],
+        numbits[1],
+        nd,
+        log_low,
+        log_high,
+        &params.numbits_scales,
+    );
 
     let embed_w = layers.pitch_embedding().float_weights.as_ref().unwrap();
     let feat_dim = OSCE_FEATURE_DIM;
@@ -83,21 +104,45 @@ pub fn osce_feature_net(
             input_buf[feat_dim..feat_dim + ed].copy_from_slice(&embed_w[pe_start..pe_start + ed]);
         }
         input_buf[feat_dim + ed..feat_dim + ed + 2 * nd].copy_from_slice(&nb_emb[..2 * nd]);
-        compute_generic_conv1d(layers.fnet_conv1(), &mut output_buf[sf * hd..(sf + 1) * hd], &mut [], &input_buf[..conv1_in], conv1_in, Activation::Tanh);
+        compute_generic_conv1d(
+            layers.fnet_conv1(),
+            &mut output_buf[sf * hd..(sf + 1) * hd],
+            &mut [],
+            &input_buf[..conv1_in],
+            conv1_in,
+            Activation::Tanh,
+        );
     }
 
     // Subframe accumulation: conv2
     input_buf[..4 * hd].copy_from_slice(&output_buf[..4 * hd]);
-    compute_generic_conv1d(layers.fnet_conv2(), &mut output_buf[..4 * cd], state.fnet_conv2_state(), &input_buf[..4 * hd], 4 * hd, Activation::Tanh);
+    compute_generic_conv1d(
+        layers.fnet_conv2(),
+        &mut output_buf[..4 * cd],
+        state.fnet_conv2_state(),
+        &input_buf[..4 * hd],
+        4 * hd,
+        Activation::Tanh,
+    );
 
     // Tconv upsampling
     input_buf[..4 * cd].copy_from_slice(&output_buf[..4 * cd]);
-    compute_generic_dense(layers.fnet_tconv(), &mut output_buf[..4 * cd], &input_buf[..4 * cd], Activation::Tanh);
+    compute_generic_dense(
+        layers.fnet_tconv(),
+        &mut output_buf[..4 * cd],
+        &input_buf[..4 * cd],
+        Activation::Tanh,
+    );
 
     // GRU per subframe
     input_buf[..4 * cd].copy_from_slice(&output_buf[..4 * cd]);
     for sf in 0..4 {
-        compute_generic_gru(layers.fnet_gru_input(), layers.fnet_gru_recurrent(), state.gru_state(), &input_buf[sf * cd..(sf + 1) * cd]);
+        compute_generic_gru(
+            layers.fnet_gru_input(),
+            layers.fnet_gru_recurrent(),
+            state.gru_state(),
+            &input_buf[sf * cd..(sf + 1) * cd],
+        );
         output[sf * cd..(sf + 1) * cd].copy_from_slice(state.gru_state());
     }
 }

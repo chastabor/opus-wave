@@ -1,6 +1,6 @@
 use super::*;
-use crate::nnet::{Activation, LinearLayer};
 use crate::nnet::ops::compute_generic_dense;
+use crate::nnet::{Activation, LinearLayer};
 
 fn scale_kernel_1d(kernel: &mut [f32], kernel_size: usize, gain: f32) {
     let mut norm = 0.0f32;
@@ -37,7 +37,8 @@ pub fn adacomb_process_frame(
     let mut output_buffer = [0.0f32; ADACOMB_MAX_FRAME_SIZE];
     let mut output_buffer_last = [0.0f32; ADACOMB_MAX_FRAME_SIZE];
     let mut kernel_buffer = [0.0f32; ADACOMB_MAX_KERNEL_SIZE];
-    let mut input_buffer = [0.0f32; ADACOMB_MAX_FRAME_SIZE + ADACOMB_MAX_LAG + ADACOMB_MAX_KERNEL_SIZE];
+    let mut input_buffer =
+        [0.0f32; ADACOMB_MAX_FRAME_SIZE + ADACOMB_MAX_LAG + ADACOMB_MAX_KERNEL_SIZE];
 
     // Prepare input: [history | x_in]
     let hist_len = kernel_size + ADACOMB_MAX_LAG;
@@ -46,11 +47,21 @@ pub fn adacomb_process_frame(
     let p_input_off = kernel_size + ADACOMB_MAX_LAG; // offset into input_buffer for current frame
 
     // Calculate kernel and gains
-    compute_generic_dense(kernel_layer, &mut kernel_buffer[..kernel_size], features, Activation::Linear);
+    compute_generic_dense(
+        kernel_layer,
+        &mut kernel_buffer[..kernel_size],
+        features,
+        Activation::Linear,
+    );
     let mut gain = [0.0f32; 1];
     compute_generic_dense(gain_layer, &mut gain, features, Activation::Relu);
     let mut global_gain = [0.0f32; 1];
-    compute_generic_dense(global_gain_layer, &mut global_gain, features, Activation::Tanh);
+    compute_generic_dense(
+        global_gain_layer,
+        &mut global_gain,
+        features,
+        Activation::Tanh,
+    );
 
     let gain = (log_gain_limit - gain[0]).exp();
     let global_gain = (filter_gain_a * global_gain[0] + filter_gain_b).exp();
@@ -69,8 +80,20 @@ pub fn adacomb_process_frame(
     let last_start = p_input_off - left_padding - state.last_pitch_lag;
     let new_start = p_input_off - left_padding - pitch_lag;
 
-    opus_celt::pitch::celt_pitch_xcorr(&last_kernel, &input_buffer[last_start..], &mut output_buffer_last, ADACOMB_MAX_KERNEL_SIZE, overlap_size);
-    opus_celt::pitch::celt_pitch_xcorr(&kernel, &input_buffer[new_start..], &mut output_buffer, ADACOMB_MAX_KERNEL_SIZE, frame_size);
+    opus_celt::pitch::celt_pitch_xcorr(
+        &last_kernel,
+        &input_buffer[last_start..],
+        &mut output_buffer_last,
+        ADACOMB_MAX_KERNEL_SIZE,
+        overlap_size,
+    );
+    opus_celt::pitch::celt_pitch_xcorr(
+        &kernel,
+        &input_buffer[new_start..],
+        &mut output_buffer,
+        ADACOMB_MAX_KERNEL_SIZE,
+        frame_size,
+    );
 
     // Overlap blend
     for s in 0..overlap_size {
@@ -79,7 +102,8 @@ pub fn adacomb_process_frame(
     }
     // Add input signal with gain blending
     for s in 0..overlap_size {
-        output_buffer[s] += (window[s] * state.last_global_gain + (1.0 - window[s]) * global_gain) * input_buffer[p_input_off + s];
+        output_buffer[s] += (window[s] * state.last_global_gain + (1.0 - window[s]) * global_gain)
+            * input_buffer[p_input_off + s];
     }
     for s in overlap_size..frame_size {
         output_buffer[s] = global_gain * (output_buffer[s] + input_buffer[p_input_off + s]);

@@ -916,8 +916,8 @@ mod tests {
         let mut scale = 0i32;
         silk_warped_autocorrelation(&mut corr, &mut scale, &input, 0, 64, 4);
         // All correlations should be zero for silent input
-        for i in 0..5 {
-            assert_eq!(corr[i], 0);
+        for &c in corr.iter().take(5) {
+            assert_eq!(c, 0);
         }
     }
 }

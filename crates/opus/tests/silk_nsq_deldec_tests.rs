@@ -64,8 +64,8 @@ fn test_rust_encoder_complexity_levels() {
 
         for frame in 0..5 {
             let mut input = vec![0.0f32; n];
-            for i in 0..n {
-                input[i] = 0.3
+            for (i, sample) in input.iter_mut().enumerate() {
+                *sample = 0.3
                     * (2.0 * std::f32::consts::PI * 200.0 * (frame * n + i) as f32 / 16000.0).sin();
             }
 
@@ -94,8 +94,8 @@ fn test_rust_encoder_complexity_levels() {
 fn test_complexity_produces_different_packets() {
     let n = 320;
     let mut input = vec![0.0f32; n];
-    for i in 0..n {
-        input[i] = 0.3 * (2.0 * std::f32::consts::PI * 200.0 * i as f32 / 16000.0).sin();
+    for (i, sample) in input.iter_mut().enumerate() {
+        *sample = 0.3 * (2.0 * std::f32::consts::PI * 200.0 * i as f32 / 16000.0).sin();
     }
 
     let mut packets = Vec::new();
@@ -144,8 +144,8 @@ fn test_high_complexity_roundtrip_stability() {
         let n = 320;
         let mut input = vec![0.0f32; n];
         let freq = 150.0 + frame as f32 * 30.0;
-        for i in 0..n {
-            input[i] =
+        for (i, sample) in input.iter_mut().enumerate() {
+            *sample =
                 0.4 * (2.0 * std::f32::consts::PI * freq * (frame * n + i) as f32 / 16000.0).sin();
         }
 

@@ -343,8 +343,8 @@ mod tests {
         let mut r = [0.0f32; 20];
         silk_lpc_analysis_filter_flp(&mut r, &pred_coef, &s, 20, 4);
         // After order samples, residual should be s[i] - 1.0*s[i-1] = 0
-        for i in 4..20 {
-            assert!((r[i]).abs() < 1e-6, "r[{}] = {}", i, r[i]);
+        for (i, &val) in r.iter().enumerate().skip(4) {
+            assert!(val.abs() < 1e-6, "r[{}] = {}", i, val);
         }
     }
 

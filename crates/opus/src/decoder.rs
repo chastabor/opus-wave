@@ -305,13 +305,22 @@ impl OpusDecoder {
                                 nolace_state: &mut dnn.osce_nolace_state[0],
                             };
                             self.silk_dec.decode(
-                                &mut self.silk_control, lost_flag, first_frame,
-                                $ec, &mut silk_out_i16, &mut silk_frame_size, &mut pf,
+                                &mut self.silk_control,
+                                lost_flag,
+                                first_frame,
+                                $ec,
+                                &mut silk_out_i16,
+                                &mut silk_frame_size,
+                                &mut pf,
                             )
                         } else {
                             self.silk_dec.decode(
-                                &mut self.silk_control, lost_flag, first_frame,
-                                $ec, &mut silk_out_i16, &mut silk_frame_size,
+                                &mut self.silk_control,
+                                lost_flag,
+                                first_frame,
+                                $ec,
+                                &mut silk_out_i16,
+                                &mut silk_frame_size,
                                 &mut opus_silk::decoder::NoPostFilter,
                             )
                         }
@@ -319,8 +328,12 @@ impl OpusDecoder {
                     #[cfg(not(feature = "dnn"))]
                     {
                         self.silk_dec.decode(
-                            &mut self.silk_control, lost_flag, first_frame,
-                            $ec, &mut silk_out_i16, &mut silk_frame_size,
+                            &mut self.silk_control,
+                            lost_flag,
+                            first_frame,
+                            $ec,
+                            &mut silk_out_i16,
+                            &mut silk_frame_size,
                             &mut opus_silk::decoder::NoPostFilter,
                         )
                     }
@@ -518,13 +531,19 @@ impl OpusDecoder {
                 let mut nb_ext = 0i32;
                 let mut extensions = Vec::new();
                 if crate::extensions::opus_packet_extensions_parse(
-                    ext_data, &mut nb_ext, &mut extensions,
-                ).is_ok() {
+                    ext_data,
+                    &mut nb_ext,
+                    &mut extensions,
+                )
+                .is_ok()
+                {
                     let frame_offset = 0i32; // DRED offset relative to current packet
                     for ext in &extensions {
                         if ext.id == opus_dnn::dred::DRED_EXTENSION_ID as i32 {
                             crate::dnn_decoder::decoder_process_dred_extension(
-                                self, ext, frame_offset,
+                                self,
+                                ext,
+                                frame_offset,
                             );
                         }
                     }
@@ -735,7 +754,7 @@ mod tests {
         opus_pcm_soft_clip(&mut pcm, 10, 1, &mut mem);
         for &s in &pcm {
             assert!(
-                s <= 1.001 && s >= -1.001,
+                (-1.001..=1.001).contains(&s),
                 "Sample {s} out of range after soft clip"
             );
         }

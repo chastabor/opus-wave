@@ -1,7 +1,7 @@
 use opus_range_coder::EcCtx;
 
-use super::*;
 use super::coding::compute_quantizer;
+use super::*;
 
 /// DRED quantization statistics (loaded from dred_rdovae_stats_data).
 /// These tables are indexed by `q_level * dim` for per-element decoding/encoding.
@@ -65,7 +65,6 @@ fn dred_decode_latents(
         x[i] = q as f32 * 256.0 / s as f32;
     }
 }
-
 
 /// Decode DRED extension payload from entropy-coded bytes.
 /// Matches C `dred_ec_decode` from dred_decoder.c.

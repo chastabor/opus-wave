@@ -1,9 +1,9 @@
-use crate::freq::*;
+use super::enc::*;
 use crate::fargan::*;
-use crate::nnet::{Activation, LinearLayer, WeightArray};
+use crate::freq::*;
 use crate::nnet::ops::{compute_generic_dense, compute_generic_gru};
 use crate::nnet::weights::{WeightError, linear_init, weight_output_dim};
-use super::enc::*;
+use crate::nnet::{Activation, LinearLayer, WeightArray};
 
 /// Maximum FEC frames buffered (DRED can provide up to 104 frames).
 pub const PLC_MAX_FEC: usize = 104;
@@ -72,12 +72,72 @@ pub fn init_plcmodel(arrays: &[WeightArray]) -> Result<PlcModel, WeightError> {
     let dense_in_in = 2 * NB_BANDS + NB_FEATURES + 1;
 
     Ok(PlcModel {
-        plc_dense_in: linear_init(arrays, Some("plc_dense_in_bias"), None, Some("plc_dense_in_weights"), None, None, None, dense_in_in, dense_in_out)?,
-        plc_gru1_input: linear_init(arrays, Some("plc_gru1_input_bias"), Some("plc_gru1_input_weights"), Some("plc_gru1_input_weights"), None, None, Some("plc_gru1_input_scale"), dense_in_out, gru1_3n)?,
-        plc_gru1_recurrent: linear_init(arrays, Some("plc_gru1_recurrent_bias"), Some("plc_gru1_recurrent_weights"), Some("plc_gru1_recurrent_weights"), None, None, Some("plc_gru1_recurrent_scale"), gru1_out, gru1_3n)?,
-        plc_gru2_input: linear_init(arrays, Some("plc_gru2_input_bias"), Some("plc_gru2_input_weights"), Some("plc_gru2_input_weights"), None, None, Some("plc_gru2_input_scale"), gru1_out, gru2_3n)?,
-        plc_gru2_recurrent: linear_init(arrays, Some("plc_gru2_recurrent_bias"), Some("plc_gru2_recurrent_weights"), Some("plc_gru2_recurrent_weights"), None, None, Some("plc_gru2_recurrent_scale"), gru2_out, gru2_3n)?,
-        plc_dense_out: linear_init(arrays, Some("plc_dense_out_bias"), None, Some("plc_dense_out_weights"), None, None, None, gru2_out, dense_out_size)?,
+        plc_dense_in: linear_init(
+            arrays,
+            Some("plc_dense_in_bias"),
+            None,
+            Some("plc_dense_in_weights"),
+            None,
+            None,
+            None,
+            dense_in_in,
+            dense_in_out,
+        )?,
+        plc_gru1_input: linear_init(
+            arrays,
+            Some("plc_gru1_input_bias"),
+            Some("plc_gru1_input_weights"),
+            Some("plc_gru1_input_weights"),
+            None,
+            None,
+            Some("plc_gru1_input_scale"),
+            dense_in_out,
+            gru1_3n,
+        )?,
+        plc_gru1_recurrent: linear_init(
+            arrays,
+            Some("plc_gru1_recurrent_bias"),
+            Some("plc_gru1_recurrent_weights"),
+            Some("plc_gru1_recurrent_weights"),
+            None,
+            None,
+            Some("plc_gru1_recurrent_scale"),
+            gru1_out,
+            gru1_3n,
+        )?,
+        plc_gru2_input: linear_init(
+            arrays,
+            Some("plc_gru2_input_bias"),
+            Some("plc_gru2_input_weights"),
+            Some("plc_gru2_input_weights"),
+            None,
+            None,
+            Some("plc_gru2_input_scale"),
+            gru1_out,
+            gru2_3n,
+        )?,
+        plc_gru2_recurrent: linear_init(
+            arrays,
+            Some("plc_gru2_recurrent_bias"),
+            Some("plc_gru2_recurrent_weights"),
+            Some("plc_gru2_recurrent_weights"),
+            None,
+            None,
+            Some("plc_gru2_recurrent_scale"),
+            gru2_out,
+            gru2_3n,
+        )?,
+        plc_dense_out: linear_init(
+            arrays,
+            Some("plc_dense_out_bias"),
+            None,
+            Some("plc_dense_out_weights"),
+            None,
+            None,
+            None,
+            gru2_out,
+            dense_out_size,
+        )?,
     })
 }
 
@@ -123,7 +183,9 @@ pub fn lpcnet_plc_init(
 /// Matches C `lpcnet_plc_fec_add`.
 pub fn lpcnet_plc_fec_add(st: &mut LpcnetPlcState, features: Option<&[f32]>) {
     match features {
-        None => { st.fec_skip += 1; }
+        None => {
+            st.fec_skip += 1;
+        }
         Some(f) => {
             debug_assert!(st.fec_fill_pos < PLC_MAX_FEC);
             let off = st.fec_fill_pos * NB_FEATURES;
@@ -145,12 +207,35 @@ fn compute_plc_pred(st: &mut LpcnetPlcState, out: &mut [f32], input: &[f32]) {
     let model = &st.model;
     let dense_out = model.plc_dense_in.nb_outputs;
     let mut tmp = [0.0f32; 256];
-    compute_generic_dense(&model.plc_dense_in, &mut tmp[..dense_out], input, Activation::Tanh);
-    compute_generic_gru(&model.plc_gru1_input, &model.plc_gru1_recurrent, &mut st.plc_net.gru1_state, &tmp[..dense_out]);
-    let PlcNetState { gru1_state, gru2_state } = &mut st.plc_net;
-    compute_generic_gru(&model.plc_gru2_input, &model.plc_gru2_recurrent, gru2_state, gru1_state);
+    compute_generic_dense(
+        &model.plc_dense_in,
+        &mut tmp[..dense_out],
+        input,
+        Activation::Tanh,
+    );
+    compute_generic_gru(
+        &model.plc_gru1_input,
+        &model.plc_gru1_recurrent,
+        &mut st.plc_net.gru1_state,
+        &tmp[..dense_out],
+    );
+    let PlcNetState {
+        gru1_state,
+        gru2_state,
+    } = &mut st.plc_net;
+    compute_generic_gru(
+        &model.plc_gru2_input,
+        &model.plc_gru2_recurrent,
+        gru2_state,
+        gru1_state,
+    );
     let out_size = model.plc_dense_out.nb_outputs;
-    compute_generic_dense(&model.plc_dense_out, &mut out[..out_size], &st.plc_net.gru2_state, Activation::Linear);
+    compute_generic_dense(
+        &model.plc_dense_out,
+        &mut out[..out_size],
+        &st.plc_net.gru2_state,
+        Activation::Linear,
+    );
 }
 
 fn get_fec_or_pred(st: &mut LpcnetPlcState) -> bool {
@@ -172,7 +257,9 @@ fn get_fec_or_pred(st: &mut LpcnetPlcState) -> bool {
         let mut out = [0.0f32; NB_FEATURES];
         compute_plc_pred(st, &mut out, &zeros);
         st.features[..NB_FEATURES].copy_from_slice(&out);
-        if st.fec_skip > 0 { st.fec_skip -= 1; }
+        if st.fec_skip > 0 {
+            st.fec_skip -= 1;
+        }
         false
     }
 }
@@ -219,12 +306,19 @@ pub fn lpcnet_plc_conceal(st: &mut LpcnetPlcState, pcm: &mut [i16]) {
             }
             burg_cepstral_analysis(&mut plc_features, &x);
             let x_copy = x;
-            preemphasis(&mut x, &mut st.enc.mem_preemph, &x_copy, PREEMPHASIS, FRAME_SIZE);
+            preemphasis(
+                &mut x,
+                &mut st.enc.mem_preemph,
+                &x_copy,
+                PREEMPHASIS,
+                FRAME_SIZE,
+            );
             compute_frame_features(&mut st.enc, &x);
 
             if (!st.analysis_gap || count > 0) && st.analysis_pos >= st.predict_pos {
                 queue_features(&mut st.cont_features, &st.enc.features);
-                plc_features[2 * NB_BANDS..2 * NB_BANDS + NB_FEATURES].copy_from_slice(&st.enc.features[..NB_FEATURES]);
+                plc_features[2 * NB_BANDS..2 * NB_BANDS + NB_FEATURES]
+                    .copy_from_slice(&st.enc.features[..NB_FEATURES]);
                 plc_features[2 * NB_BANDS + NB_FEATURES] = 1.0;
                 st.plc_bak[0] = st.plc_bak[1].clone();
                 st.plc_bak[1] = st.plc_net.clone();
@@ -262,7 +356,8 @@ pub fn lpcnet_plc_conceal(st: &mut LpcnetPlcState, pcm: &mut [i16]) {
     }
 
     if st.loss_count >= 10 {
-        st.features[0] = (-15.0f32).max(st.features[0] + ATT_TABLE[9] - 2.0 * (st.loss_count as f32 - 9.0));
+        st.features[0] =
+            (-15.0f32).max(st.features[0] + ATT_TABLE[9] - 2.0 * (st.loss_count as f32 - 9.0));
     } else {
         st.features[0] = (-15.0f32).max(st.features[0] + ATT_TABLE[st.loss_count]);
     }

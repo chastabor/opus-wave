@@ -1,4 +1,4 @@
-use super::{Conv2dLayer, LinearLayer, WeightArray, WeightType, WEIGHT_BLOCK_SIZE};
+use super::{Conv2dLayer, LinearLayer, WEIGHT_BLOCK_SIZE, WeightArray, WeightType};
 
 const SPARSE_BLOCK_SIZE: usize = 32;
 
@@ -8,7 +8,10 @@ pub struct WeightError;
 
 impl std::fmt::Display for WeightError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "weight initialization failed: missing or wrong-sized array")
+        write!(
+            f,
+            "weight initialization failed: missing or wrong-sized array"
+        )
     }
 }
 
@@ -36,11 +39,22 @@ impl WeightHead {
         let block_size = i32::from_le_bytes(data[16..20].try_into().ok()?);
         let mut name = [0u8; 44];
         name.copy_from_slice(&data[20..64]);
-        Some(WeightHead { head, version, weight_type, size, block_size, name })
+        Some(WeightHead {
+            head,
+            version,
+            weight_type,
+            size,
+            block_size,
+            name,
+        })
     }
 
     fn name_str(&self) -> &str {
-        let end = self.name.iter().position(|&b| b == 0).unwrap_or(self.name.len());
+        let end = self
+            .name
+            .iter()
+            .position(|&b| b == 0)
+            .unwrap_or(self.name.len());
         std::str::from_utf8(&self.name[..end]).unwrap_or("")
     }
 
@@ -115,7 +129,11 @@ fn find_array_entry<'a>(arrays: &'a [WeightArray], name: &str) -> Option<&'a Wei
 /// Find a weight array by name, trying type-suffixed variants if the exact name isn't found.
 /// The C weight blobs use names like "xxx_weights_float" and "xxx_weights_int8",
 /// while Rust init functions may use just "xxx_weights". This bridges the gap.
-fn find_array_entry_fuzzy<'a>(arrays: &'a [WeightArray], name: &str, suffixes: &[&str]) -> Option<&'a WeightArray> {
+fn find_array_entry_fuzzy<'a>(
+    arrays: &'a [WeightArray],
+    name: &str,
+    suffixes: &[&str],
+) -> Option<&'a WeightArray> {
     if let Some(a) = find_array_entry(arrays, name) {
         return Some(a);
     }
@@ -128,7 +146,12 @@ fn find_array_entry_fuzzy<'a>(arrays: &'a [WeightArray], name: &str, suffixes: &
     None
 }
 
-fn find_array_check_fuzzy<'a>(arrays: &'a [WeightArray], name: &str, expected_size: usize, suffixes: &[&str]) -> Option<&'a [u8]> {
+fn find_array_check_fuzzy<'a>(
+    arrays: &'a [WeightArray],
+    name: &str,
+    expected_size: usize,
+    suffixes: &[&str],
+) -> Option<&'a [u8]> {
     let a = find_array_entry_fuzzy(arrays, name, suffixes)?;
     if a.data.len() == expected_size {
         Some(&a.data)
@@ -137,7 +160,12 @@ fn find_array_check_fuzzy<'a>(arrays: &'a [WeightArray], name: &str, expected_si
     }
 }
 
-fn opt_array_check_fuzzy<'a>(arrays: &'a [WeightArray], name: &str, expected_size: usize, suffixes: &[&str]) -> Result<Option<&'a [u8]>, WeightError> {
+fn opt_array_check_fuzzy<'a>(
+    arrays: &'a [WeightArray],
+    name: &str,
+    expected_size: usize,
+    suffixes: &[&str],
+) -> Result<Option<&'a [u8]>, WeightError> {
     match find_array_entry_fuzzy(arrays, name, suffixes) {
         Some(a) => {
             if a.data.len() == expected_size {
@@ -150,7 +178,11 @@ fn opt_array_check_fuzzy<'a>(arrays: &'a [WeightArray], name: &str, expected_siz
     }
 }
 
-fn find_array_check<'a>(arrays: &'a [WeightArray], name: &str, expected_size: usize) -> Option<&'a [u8]> {
+fn find_array_check<'a>(
+    arrays: &'a [WeightArray],
+    name: &str,
+    expected_size: usize,
+) -> Option<&'a [u8]> {
     let a = find_array_entry(arrays, name)?;
     if a.data.len() == expected_size {
         Some(&a.data)
@@ -161,7 +193,11 @@ fn find_array_check<'a>(arrays: &'a [WeightArray], name: &str, expected_size: us
 
 /// Find an optional weight array. Returns Ok(None) if not found,
 /// Err if found with wrong size.
-fn opt_array_check<'a>(arrays: &'a [WeightArray], name: &str, expected_size: usize) -> Result<Option<&'a [u8]>, WeightError> {
+fn opt_array_check<'a>(
+    arrays: &'a [WeightArray],
+    name: &str,
+    expected_size: usize,
+) -> Result<Option<&'a [u8]>, WeightError> {
     match find_array_entry(arrays, name) {
         Some(a) => {
             if a.data.len() == expected_size {
@@ -234,15 +270,23 @@ fn bytes_to_i8_vec(data: &[u8]) -> Vec<i8> {
 /// Requires the array to be `WeightType::Float`.
 pub fn weight_output_dim(arrays: &[WeightArray], name: &str) -> Result<usize, WeightError> {
     let a = arrays.iter().find(|a| a.name == name).ok_or(WeightError)?;
-    if a.weight_type != WeightType::Float { return Err(WeightError); }
+    if a.weight_type != WeightType::Float {
+        return Err(WeightError);
+    }
     Ok(a.data.len() / 4)
 }
 
 /// Infer the input dimension of a float dense layer from its weight matrix size.
 /// weight_matrix_bytes = nb_inputs * nb_outputs * 4, so nb_inputs = bytes / (nb_outputs * 4).
-pub fn weight_input_dim(arrays: &[WeightArray], weights_name: &str, nb_outputs: usize) -> Result<usize, WeightError> {
+pub fn weight_input_dim(
+    arrays: &[WeightArray],
+    weights_name: &str,
+    nb_outputs: usize,
+) -> Result<usize, WeightError> {
     let a = find_array_entry_fuzzy(arrays, weights_name, &["_float"]).ok_or(WeightError)?;
-    if nb_outputs == 0 { return Err(WeightError); }
+    if nb_outputs == 0 {
+        return Err(WeightError);
+    }
     Ok(a.data.len() / (nb_outputs * 4))
 }
 
@@ -291,21 +335,35 @@ pub fn linear_init(
     const FLOAT_SUFFIXES: &[&str] = &["_float"];
 
     if let Some(idx_name) = weights_idx {
-        let (idx_data, total_blocks) = find_idx_check(arrays, idx_name, nb_inputs, nb_outputs).ok_or(WeightError)?;
+        let (idx_data, total_blocks) =
+            find_idx_check(arrays, idx_name, nb_inputs, nb_outputs).ok_or(WeightError)?;
         layer.weights_idx = Some(idx_data);
 
         if let Some(name) = weights {
-            let data = find_array_check_fuzzy(arrays, name, SPARSE_BLOCK_SIZE * total_blocks, INT8_SUFFIXES).ok_or(WeightError)?;
+            let data = find_array_check_fuzzy(
+                arrays,
+                name,
+                SPARSE_BLOCK_SIZE * total_blocks,
+                INT8_SUFFIXES,
+            )
+            .ok_or(WeightError)?;
             layer.weights = Some(bytes_to_i8_vec(data));
         }
         if let Some(name) = float_weights
-            && let Some(data) = opt_array_check_fuzzy(arrays, name, SPARSE_BLOCK_SIZE * total_blocks * 4, FLOAT_SUFFIXES).map_err(|_| WeightError)?
+            && let Some(data) = opt_array_check_fuzzy(
+                arrays,
+                name,
+                SPARSE_BLOCK_SIZE * total_blocks * 4,
+                FLOAT_SUFFIXES,
+            )
+            .map_err(|_| WeightError)?
         {
             layer.float_weights = Some(bytes_to_f32_vec(data));
         }
     } else {
         if let Some(name) = weights {
-            let data = find_array_check_fuzzy(arrays, name, nb_inputs * nb_outputs, INT8_SUFFIXES).ok_or(WeightError)?;
+            let data = find_array_check_fuzzy(arrays, name, nb_inputs * nb_outputs, INT8_SUFFIXES)
+                .ok_or(WeightError)?;
             layer.weights = Some(bytes_to_i8_vec(data));
 
             // Auto-load companion float weights when only int8 name is given.
@@ -316,13 +374,17 @@ pub fn linear_init(
                 } else {
                     format!("{name}_float")
                 };
-                if let Ok(Some(data)) = opt_array_check(arrays, &float_name, nb_inputs * nb_outputs * 4) {
+                if let Ok(Some(data)) =
+                    opt_array_check(arrays, &float_name, nb_inputs * nb_outputs * 4)
+                {
                     layer.float_weights = Some(bytes_to_f32_vec(data));
                 }
             }
         }
         if let Some(name) = float_weights
-            && let Some(data) = opt_array_check_fuzzy(arrays, name, nb_inputs * nb_outputs * 4, FLOAT_SUFFIXES).map_err(|_| WeightError)?
+            && let Some(data) =
+                opt_array_check_fuzzy(arrays, name, nb_inputs * nb_outputs * 4, FLOAT_SUFFIXES)
+                    .map_err(|_| WeightError)?
         {
             layer.float_weights = Some(bytes_to_f32_vec(data));
         }
@@ -372,7 +434,9 @@ pub fn conv2d_init(
     }
     if let Some(name) = float_weights {
         let expected = in_channels * out_channels * ktime * kheight * 4;
-        if let Some(data) = opt_array_check_fuzzy(arrays, name, expected, &["_float"]).map_err(|_| WeightError)? {
+        if let Some(data) =
+            opt_array_check_fuzzy(arrays, name, expected, &["_float"]).map_err(|_| WeightError)?
+        {
             layer.float_weights = Some(bytes_to_f32_vec(data));
         }
     }
@@ -467,8 +531,13 @@ mod tests {
         let result = linear_init(
             &arrays,
             Some("nonexistent_bias"),
-            None, None, None, None, None,
-            4, 8,
+            None,
+            None,
+            None,
+            None,
+            None,
+            4,
+            8,
         );
         assert!(result.is_err());
     }
@@ -482,13 +551,8 @@ mod tests {
         blob.extend(make_weight_record("conv_weights", &weights_data));
         let arrays = parse_weights(&blob).unwrap();
 
-        let layer = conv2d_init(
-            &arrays,
-            Some("conv_bias"),
-            Some("conv_weights"),
-            2, 3, 1, 1,
-        )
-        .unwrap();
+        let layer =
+            conv2d_init(&arrays, Some("conv_bias"), Some("conv_weights"), 2, 3, 1, 1).unwrap();
 
         assert_eq!(layer.in_channels, 2);
         assert_eq!(layer.out_channels, 3);

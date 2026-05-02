@@ -1,14 +1,14 @@
 use opus_range_coder::EcCtx;
 
 use crate::freq::PREEMPHASIS;
-use crate::lpcnet::enc::{LpcnetEncState, preemphasis, compute_frame_features, NB_TOTAL_FEATURES};
+use crate::lpcnet::enc::{LpcnetEncState, NB_TOTAL_FEATURES, compute_frame_features, preemphasis};
 use crate::nnet::Activation;
 use crate::nnet::activations::compute_activation;
 
-use super::*;
 use super::coding::compute_quantizer;
 use super::decoder::DredStats;
 use super::rdovae_enc::*;
+use super::*;
 
 /// DRED encoder state. Matches C `DREDEnc` from dred_encoder.h.
 pub struct DredEnc {
@@ -29,10 +29,7 @@ pub struct DredEnc {
 }
 
 /// Initialize DRED encoder state.
-pub fn dred_encoder_init(
-    model: RdovaeEnc,
-    lpcnet_enc_state: LpcnetEncState,
-) -> DredEnc {
+pub fn dred_encoder_init(model: RdovaeEnc, lpcnet_enc_state: LpcnetEncState) -> DredEnc {
     let rdovae_enc = rdovae_enc_state_init(&model);
     let latent_dim = model.latent_dim;
     let state_dim = model.state_dim;
@@ -92,13 +89,25 @@ pub fn dred_compute_latents(
             let mut x = [0.0f32; DRED_FRAME_SIZE];
             x.copy_from_slice(&enc.input_buffer[..DRED_FRAME_SIZE]);
             let x_copy = x;
-            preemphasis(&mut x, &mut enc.lpcnet_enc_state.mem_preemph, &x_copy, PREEMPHASIS, DRED_FRAME_SIZE);
+            preemphasis(
+                &mut x,
+                &mut enc.lpcnet_enc_state.mem_preemph,
+                &x_copy,
+                PREEMPHASIS,
+                DRED_FRAME_SIZE,
+            );
             compute_frame_features(&mut enc.lpcnet_enc_state, &x);
             dframe_features[..NB_TOTAL_FEATURES].copy_from_slice(&enc.lpcnet_enc_state.features);
 
             x.copy_from_slice(&enc.input_buffer[DRED_FRAME_SIZE..2 * DRED_FRAME_SIZE]);
             let x_copy = x;
-            preemphasis(&mut x, &mut enc.lpcnet_enc_state.mem_preemph, &x_copy, PREEMPHASIS, DRED_FRAME_SIZE);
+            preemphasis(
+                &mut x,
+                &mut enc.lpcnet_enc_state.mem_preemph,
+                &x_copy,
+                PREEMPHASIS,
+                DRED_FRAME_SIZE,
+            );
             compute_frame_features(&mut enc.lpcnet_enc_state, &x);
             dframe_features[NB_TOTAL_FEATURES..].copy_from_slice(&enc.lpcnet_enc_state.features);
 
@@ -217,7 +226,8 @@ pub fn dred_encode_silk_frame(
     }
 
     // Skip forward past silent frames (C lines 303-306).
-    while latent_offset < enc.latents_buffer_fill && !dred_voice_active(activity_mem, latent_offset) {
+    while latent_offset < enc.latents_buffer_fill && !dred_voice_active(activity_mem, latent_offset)
+    {
         latent_offset += 1;
         extra_dred_offset += 1;
     }
@@ -308,7 +318,9 @@ pub fn dred_encode_silk_frame(
         );
 
         if ec.tell() > 8 * max_bytes as i32 {
-            if i == 0 { return 0; }
+            if i == 0 {
+                return 0;
+            }
             break;
         }
 

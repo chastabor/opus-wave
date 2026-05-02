@@ -37,9 +37,9 @@ fn silk_16k_gain_analysis() {
 
     let n_warmup = 15;
     for frame in 0..=n_warmup {
-        for i in 0..FRAME_SIZE as usize {
+        for (i, sample) in pcm_in.iter_mut().enumerate() {
             let t = (frame * FRAME_SIZE as usize + i) as f32 / fs as f32;
-            pcm_in[i] = 0.5 * (2.0 * std::f32::consts::PI * 440.0 * t).sin();
+            *sample = 0.5 * (2.0 * std::f32::consts::PI * 440.0 * t).sin();
         }
 
         let c_len = c_enc.encode_float(&pcm_in, FRAME_SIZE, &mut c_pkt).unwrap();
@@ -137,9 +137,9 @@ fn test_silk_roundtrip_gain_ratio() {
     let mut out = vec![0.0f32; FRAME_SIZE as usize];
 
     for f in 0..=15 {
-        for i in 0..FRAME_SIZE as usize {
+        for (i, sample) in pcm.iter_mut().enumerate() {
             let t = (f * FRAME_SIZE as usize + i) as f32 / fs as f32;
-            pcm[i] = 0.5 * (2.0 * std::f32::consts::PI * 440.0 * t).sin();
+            *sample = 0.5 * (2.0 * std::f32::consts::PI * 440.0 * t).sin();
         }
         let len = enc
             .encode_float(&pcm, FRAME_SIZE, &mut pkt, MAX_PACKET as i32)
@@ -173,9 +173,9 @@ fn test_silk_decoder_matches_c_reference() {
     let mut rust_out = vec![0.0f32; FRAME_SIZE as usize];
 
     for f in 0..=15 {
-        for i in 0..FRAME_SIZE as usize {
+        for (i, sample) in pcm.iter_mut().enumerate() {
             let t = (f * FRAME_SIZE as usize + i) as f32 / fs as f32;
-            pcm[i] = 0.5 * (2.0 * std::f32::consts::PI * 440.0 * t).sin();
+            *sample = 0.5 * (2.0 * std::f32::consts::PI * 440.0 * t).sin();
         }
         let len = c_enc.encode_float(&pcm, FRAME_SIZE, &mut pkt).unwrap();
         c_dec
@@ -208,9 +208,9 @@ fn test_silk_packet_size_stability() {
     let mut sizes = Vec::new();
 
     for f in 0..20 {
-        for i in 0..FRAME_SIZE as usize {
+        for (i, sample) in pcm.iter_mut().enumerate() {
             let t = (f * FRAME_SIZE as usize + i) as f32 / fs as f32;
-            pcm[i] = 0.5 * (2.0 * std::f32::consts::PI * 440.0 * t).sin();
+            *sample = 0.5 * (2.0 * std::f32::consts::PI * 440.0 * t).sin();
         }
         let len = enc
             .encode_float(&pcm, FRAME_SIZE, &mut pkt, MAX_PACKET as i32)

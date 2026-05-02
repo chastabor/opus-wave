@@ -85,8 +85,8 @@ pub fn silk_decode_parameters(
         let cbk_ptr = SILK_LTP_VQ_PTRS_Q7[ps_dec.indices.per_index as usize];
         for k in 0..ps_dec.nb_subfr as usize {
             let ix = ps_dec.indices.ltp_index[k] as usize;
-            for i in 0..LTP_ORDER {
-                ps_dec_ctrl.ltp_coef_q14[k * LTP_ORDER + i] = (cbk_ptr[ix][i] as i16) << 7;
+            for (i, &coef) in cbk_ptr[ix].iter().enumerate().take(LTP_ORDER) {
+                ps_dec_ctrl.ltp_coef_q14[k * LTP_ORDER + i] = (coef as i16) << 7;
             }
         }
 

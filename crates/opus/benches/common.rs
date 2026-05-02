@@ -166,8 +166,8 @@ pub fn generate_input_frames(cfg: &BenchConfig) -> Vec<Vec<f32>> {
                     buf[i * 2 + 1] = cfg.amp * (2.0 * std::f32::consts::PI * cfg.freq_r * t).sin();
                 }
             } else {
-                for i in 0..FRAME_SIZE as usize {
-                    buf[i] = cfg.amp
+                for (i, sample) in buf.iter_mut().enumerate().take(FRAME_SIZE as usize) {
+                    *sample = cfg.amp
                         * (2.0 * std::f32::consts::PI * cfg.freq_l * (i + offset) as f32
                             / sample_rate as f32)
                             .sin();

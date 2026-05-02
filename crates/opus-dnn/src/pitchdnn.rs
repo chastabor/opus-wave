@@ -1,8 +1,8 @@
-use crate::nnet::{Activation, Conv2dLayer, LinearLayer};
+use crate::nnet::WeightArray;
 use crate::nnet::conv2d::compute_conv2d;
 use crate::nnet::ops::{compute_generic_dense, compute_generic_gru};
 use crate::nnet::weights::{WeightError, conv2d_init, linear_init, weight_output_dim};
-use crate::nnet::WeightArray;
+use crate::nnet::{Activation, Conv2dLayer, LinearLayer};
 
 pub const PITCH_MIN_PERIOD: usize = 32;
 pub const PITCH_MAX_PERIOD: usize = 256;
@@ -63,57 +63,82 @@ pub fn init_pitchdnn(arrays: &[WeightArray]) -> Result<PitchDnn, WeightError> {
             Some("dense_if_upsampler_1_bias"),
             Some("dense_if_upsampler_1_weights"),
             Some("dense_if_upsampler_1_weights"),
-            None, None, Some("dense_if_upsampler_1_scale"),
-            NB_IF_FEATURES, if_up1_out,
+            None,
+            None,
+            Some("dense_if_upsampler_1_scale"),
+            NB_IF_FEATURES,
+            if_up1_out,
         )?,
         dense_if_upsampler_2: linear_init(
             arrays,
             Some("dense_if_upsampler_2_bias"),
             Some("dense_if_upsampler_2_weights"),
             Some("dense_if_upsampler_2_weights"),
-            None, None, Some("dense_if_upsampler_2_scale"),
-            if_up1_out, if_up2_out,
+            None,
+            None,
+            Some("dense_if_upsampler_2_scale"),
+            if_up1_out,
+            if_up2_out,
         )?,
         conv2d_1: conv2d_init(
             arrays,
-            Some("conv2d_1_bias"), Some("conv2d_1_weight"),
-            1, conv1_out, 3, 3,
+            Some("conv2d_1_bias"),
+            Some("conv2d_1_weight"),
+            1,
+            conv1_out,
+            3,
+            3,
         )?,
         conv2d_2: conv2d_init(
             arrays,
-            Some("conv2d_2_bias"), Some("conv2d_2_weight"),
-            conv1_out, conv2_out, 3, 3,
+            Some("conv2d_2_bias"),
+            Some("conv2d_2_weight"),
+            conv1_out,
+            conv2_out,
+            3,
+            3,
         )?,
         dense_downsampler: linear_init(
             arrays,
             Some("dense_downsampler_bias"),
             Some("dense_downsampler_weights"),
             Some("dense_downsampler_weights"),
-            None, None, Some("dense_downsampler_scale"),
-            NB_XCORR_FEATURES + if_up2_out, ds_out,
+            None,
+            None,
+            Some("dense_downsampler_scale"),
+            NB_XCORR_FEATURES + if_up2_out,
+            ds_out,
         )?,
         gru_1_input: linear_init(
             arrays,
             Some("gru_1_input_bias"),
             Some("gru_1_input_weights"),
             Some("gru_1_input_weights"),
-            None, None, Some("gru_1_input_scale"),
-            ds_out, gru_3n,
+            None,
+            None,
+            Some("gru_1_input_scale"),
+            ds_out,
+            gru_3n,
         )?,
         gru_1_recurrent: linear_init(
             arrays,
             Some("gru_1_recurrent_bias"),
             Some("gru_1_recurrent_weights"),
             Some("gru_1_recurrent_weights"),
-            None, None, Some("gru_1_recurrent_scale"),
-            gru_3n / 3, gru_3n,
+            None,
+            None,
+            Some("gru_1_recurrent_scale"),
+            gru_3n / 3,
+            gru_3n,
         )?,
         dense_final_upsampler: linear_init(
             arrays,
             Some("dense_final_upsampler_bias"),
             Some("dense_final_upsampler_weights"),
             Some("dense_final_upsampler_weights"),
-            None, None, Some("dense_final_upsampler_scale"),
+            None,
+            None,
+            Some("dense_final_upsampler_scale"),
             gru_3n / 3,
             weight_output_dim(arrays, "dense_final_upsampler_bias")?,
         )?,
@@ -153,7 +178,12 @@ pub fn compute_pitchdnn(
     debug_assert!(conv1_out_ch <= MAX_CONV_CHANNELS);
 
     let mut if1_out = [0.0f32; MAX_IF_UP1_SIZE];
-    compute_generic_dense(&model.dense_if_upsampler_1, &mut if1_out[..if_up1_size], if_features, Activation::Tanh);
+    compute_generic_dense(
+        &model.dense_if_upsampler_1,
+        &mut if1_out[..if_up1_size],
+        if_features,
+        Activation::Tanh,
+    );
 
     let ds_in_size = NB_XCORR_FEATURES + if_up2_size;
     let mut downsampler_in = [0.0f32; NB_XCORR_FEATURES + MAX_IF_UP2_SIZE];
@@ -190,12 +220,27 @@ pub fn compute_pitchdnn(
     );
 
     let mut downsampler_out = [0.0f32; MAX_DS_OUT_SIZE];
-    compute_generic_dense(&model.dense_downsampler, &mut downsampler_out[..ds_out_size], &downsampler_in[..ds_in_size], Activation::Tanh);
+    compute_generic_dense(
+        &model.dense_downsampler,
+        &mut downsampler_out[..ds_out_size],
+        &downsampler_in[..ds_in_size],
+        Activation::Tanh,
+    );
 
-    compute_generic_gru(&model.gru_1_input, &model.gru_1_recurrent, &mut st.gru_state, &downsampler_out[..ds_out_size]);
+    compute_generic_gru(
+        &model.gru_1_input,
+        &model.gru_1_recurrent,
+        &mut st.gru_state,
+        &downsampler_out[..ds_out_size],
+    );
 
     let mut output = [0.0f32; MAX_FINAL_OUT_SIZE];
-    compute_generic_dense(&model.dense_final_upsampler, &mut output[..final_out_size], &st.gru_state, Activation::Linear);
+    compute_generic_dense(
+        &model.dense_final_upsampler,
+        &mut output[..final_out_size],
+        &st.gru_state,
+        Activation::Linear,
+    );
 
     // Find peak and compute weighted average position
     let mut pos = 0;

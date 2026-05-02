@@ -1,14 +1,14 @@
 pub mod bbwenet;
 pub mod common;
 pub mod config;
-pub mod structs;
 pub mod features;
 pub mod lace;
 pub mod nolace;
+pub mod structs;
 
 use crate::nnet::weights::{WeightError, parse_weights};
-use structs::OsceModel;
 use config::*;
+use structs::OsceModel;
 
 /// Load OSCE models (LACE, NoLACE, BBWENet) from weight data.
 /// Matches C `osce_load_models` from osce.c.
@@ -75,8 +75,13 @@ pub fn osce_enhance_frame(
                 let mut output = [0.0f32; 4 * lace::LACE_FRAME_SIZE];
                 let len = xq.len().min(output.len());
                 lace::lace_process_20ms_frame(
-                    lace_model, state, &mut output, xq,
-                    features, numbits, periods,
+                    lace_model,
+                    state,
+                    &mut output,
+                    xq,
+                    features,
+                    numbits,
+                    periods,
                 );
                 xq[..len].copy_from_slice(&output[..len]);
             }
@@ -86,8 +91,13 @@ pub fn osce_enhance_frame(
                 let mut output = [0.0f32; 4 * nolace::NOLACE_FRAME_SIZE];
                 let len = xq.len().min(output.len());
                 nolace::nolace_process_20ms_frame(
-                    nolace_model, state, &mut output, xq,
-                    features, numbits, periods,
+                    nolace_model,
+                    state,
+                    &mut output,
+                    xq,
+                    features,
+                    numbits,
+                    periods,
                 );
                 xq[..len].copy_from_slice(&output[..len]);
             }

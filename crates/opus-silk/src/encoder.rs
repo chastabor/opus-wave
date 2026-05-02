@@ -1732,8 +1732,8 @@ mod tests {
         // Generate a simple 200Hz tone at 16kHz
         let n = 320;
         let mut samples = vec![0i16; n];
-        for i in 0..n {
-            samples[i] =
+        for (i, sample) in samples.iter_mut().enumerate() {
+            *sample =
                 (5000.0 * (2.0 * std::f64::consts::PI * 200.0 * i as f64 / 16000.0).sin()) as i16;
         }
 

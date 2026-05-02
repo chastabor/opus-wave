@@ -748,8 +748,8 @@ mod tests {
 
         // Generate a 200Hz tone
         let mut input = vec![0i16; total_len];
-        for i in 0..total_len {
-            input[i] =
+        for (i, sample) in input.iter_mut().enumerate() {
+            *sample =
                 (8000.0 * (2.0 * std::f64::consts::PI * 200.0 * i as f64 / 16000.0).sin()) as i16;
         }
 
@@ -801,8 +801,8 @@ mod tests {
         let total_len = (frame_length + la_shape) as usize;
 
         let mut input = vec![0i16; total_len];
-        for i in 0..total_len {
-            input[i] =
+        for (i, sample) in input.iter_mut().enumerate() {
+            *sample =
                 (5000.0 * (2.0 * std::f64::consts::PI * 150.0 * i as f64 / 16000.0).sin()) as i16;
         }
 

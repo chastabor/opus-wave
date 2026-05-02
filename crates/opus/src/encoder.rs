@@ -1110,8 +1110,8 @@ mod tests {
 
         // Generate a simple 440Hz sine tone
         let mut pcm_in = vec![0.0f32; frame_size];
-        for i in 0..frame_size {
-            pcm_in[i] = 0.5 * (2.0 * std::f32::consts::PI * 440.0 * i as f32 / fs as f32).sin();
+        for (i, sample) in pcm_in.iter_mut().enumerate() {
+            *sample = 0.5 * (2.0 * std::f32::consts::PI * 440.0 * i as f32 / fs as f32).sin();
         }
 
         // Encode

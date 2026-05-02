@@ -124,8 +124,8 @@ fn test_rust_encode_vs_c_ref_sine() {
 
     // Generate the same signal
     let mut input = vec![0.0f32; frame_size];
-    for i in 0..frame_size {
-        input[i] = 0.5 * (2.0 * std::f32::consts::PI * 440.0 * i as f32 / 48000.0).sin();
+    for (i, sample) in input.iter_mut().enumerate() {
+        *sample = 0.5 * (2.0 * std::f32::consts::PI * 440.0 * i as f32 / 48000.0).sin();
     }
 
     // Encode with Rust
@@ -186,8 +186,8 @@ fn test_rust_encode_packet_size_reasonable() {
         OpusEncoder::new(SampleRate::Hz48000, Channels::Mono, Application::Audio).unwrap();
     enc2.set_bitrate(Bitrate::BitsPerSecond(64000));
     let mut sine = vec![0.0f32; frame_size];
-    for i in 0..frame_size {
-        sine[i] = 0.5 * (2.0 * std::f32::consts::PI * 440.0 * i as f32 / 48000.0).sin();
+    for (i, sample) in sine.iter_mut().enumerate() {
+        *sample = 0.5 * (2.0 * std::f32::consts::PI * 440.0 * i as f32 / 48000.0).sin();
     }
     let nbytes = enc2
         .encode_float(&sine, frame_size as i32, &mut packet, 1500)
@@ -196,7 +196,7 @@ fn test_rust_encode_packet_size_reasonable() {
     // C ref sine = 261 bytes at 64kbps with VBR. Rust CBR may differ.
     // At 64kbps/20ms, CBR target = ~160 bytes. Allow wide range.
     assert!(
-        nbytes >= 10 && nbytes <= 1275,
+        (10..=1275).contains(&nbytes),
         "Sine packet size should be valid, got {nbytes} bytes (C ref: 261)"
     );
 }
@@ -214,8 +214,8 @@ fn test_rust_encode_multiframe_roundtrip() {
         let mut input = vec![0.0f32; frame_size];
         let freq = 220.0 + frame as f32 * 110.0; // vary frequency
         let amp = if frame == 5 { 0.0 } else { 0.3 }; // silence at frame 5
-        for i in 0..frame_size {
-            input[i] = amp
+        for (i, sample) in input.iter_mut().enumerate() {
+            *sample = amp
                 * (2.0 * std::f32::consts::PI * freq * (frame * frame_size + i) as f32 / 48000.0)
                     .sin();
         }
@@ -288,8 +288,8 @@ fn test_silk_voip_encode_decode_roundtrip() {
     for frame in 0..5 {
         let mut input = vec![0.0f32; 320];
         let freq = 200.0 + frame as f32 * 50.0;
-        for i in 0..320 {
-            input[i] = 0.3 * (2.0 * std::f32::consts::PI * freq * i as f32 / 16000.0).sin();
+        for (i, sample) in input.iter_mut().enumerate() {
+            *sample = 0.3 * (2.0 * std::f32::consts::PI * freq * i as f32 / 16000.0).sin();
         }
 
         let mut packet = vec![0u8; 1500];

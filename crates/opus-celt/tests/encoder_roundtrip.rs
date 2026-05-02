@@ -35,8 +35,8 @@ fn gen_noise(amplitude: f32, n: usize) -> Vec<f32> {
 
 fn gen_click(amplitude: f32, n: usize) -> Vec<f32> {
     let mut pcm = vec![0.0f32; n];
-    for i in 100..110usize.min(n) {
-        pcm[i] = amplitude;
+    for sample in pcm.iter_mut().take(110usize.min(n)).skip(100) {
+        *sample = amplitude;
     }
     pcm
 }

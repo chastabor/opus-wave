@@ -42,8 +42,8 @@ const NUM_FRAMES: usize = 10;
 /// Generate a sine tone at the given frequency and amplitude.
 fn generate_tone(freq: f32, amplitude: f32, num_samples: usize, sample_offset: usize) -> Vec<f32> {
     let mut buf = vec![0.0f32; num_samples];
-    for i in 0..num_samples {
-        buf[i] = amplitude
+    for (i, sample) in buf.iter_mut().enumerate() {
+        *sample = amplitude
             * (2.0 * std::f32::consts::PI * freq * (sample_offset + i) as f32 / SAMPLE_RATE as f32)
                 .sin();
     }
@@ -191,9 +191,9 @@ fn test_fec_decode_with_plc_fallback() {
     let mut dec = OpusDecoder::new(SampleRate::Hz16000, Channels::Mono).unwrap();
 
     // Decode several frames normally to build up decoder state
-    for i in 0..5 {
+    for packet in packets.iter().take(5) {
         let mut pcm = vec![0.0f32; FRAME_SIZE];
-        dec.decode_float(Some(&packets[i]), &mut pcm, FRAME_SIZE as i32, false)
+        dec.decode_float(Some(packet), &mut pcm, FRAME_SIZE as i32, false)
             .unwrap();
     }
 
@@ -209,9 +209,9 @@ fn test_fec_decode_with_plc_fallback() {
     // Now try FEC recovery of frame 5 using frame 6's data
     // (In practice, this would be done before the PLC call, but we test both paths)
     let mut dec2 = OpusDecoder::new(SampleRate::Hz16000, Channels::Mono).unwrap();
-    for i in 0..5 {
+    for packet in packets.iter().take(5) {
         let mut pcm = vec![0.0f32; FRAME_SIZE];
-        dec2.decode_float(Some(&packets[i]), &mut pcm, FRAME_SIZE as i32, false)
+        dec2.decode_float(Some(packet), &mut pcm, FRAME_SIZE as i32, false)
             .unwrap();
     }
 
@@ -281,8 +281,8 @@ fn generate_tone_48k(
     sample_offset: usize,
 ) -> Vec<f32> {
     let mut buf = vec![0.0f32; num_samples];
-    for i in 0..num_samples {
-        buf[i] = amplitude
+    for (i, sample) in buf.iter_mut().enumerate() {
+        *sample = amplitude
             * (2.0 * std::f32::consts::PI * freq * (sample_offset + i) as f32 / 48000.0).sin();
     }
     buf
@@ -501,10 +501,10 @@ fn test_plc_differs_from_normal_decode() {
 
     // Decode frames 0-4 normally with decoder A
     let mut dec_a = OpusDecoder::new(SampleRate::Hz16000, Channels::Mono).unwrap();
-    for i in 0..5 {
+    for packet in packets.iter().take(5) {
         let mut pcm = vec![0.0f32; FRAME_SIZE];
         dec_a
-            .decode_float(Some(&packets[i]), &mut pcm, FRAME_SIZE as i32, false)
+            .decode_float(Some(packet), &mut pcm, FRAME_SIZE as i32, false)
             .unwrap();
     }
 
@@ -516,10 +516,10 @@ fn test_plc_differs_from_normal_decode() {
 
     // Now do the same but use PLC for frame 5
     let mut dec_b = OpusDecoder::new(SampleRate::Hz16000, Channels::Mono).unwrap();
-    for i in 0..5 {
+    for packet in packets.iter().take(5) {
         let mut pcm = vec![0.0f32; FRAME_SIZE];
         dec_b
-            .decode_float(Some(&packets[i]), &mut pcm, FRAME_SIZE as i32, false)
+            .decode_float(Some(packet), &mut pcm, FRAME_SIZE as i32, false)
             .unwrap();
     }
 
@@ -552,9 +552,9 @@ fn test_consecutive_plc_attenuates() {
     let mut dec = OpusDecoder::new(SampleRate::Hz16000, Channels::Mono).unwrap();
 
     // Decode some frames normally
-    for i in 0..5 {
+    for packet in packets.iter().take(5) {
         let mut pcm = vec![0.0f32; FRAME_SIZE];
-        dec.decode_float(Some(&packets[i]), &mut pcm, FRAME_SIZE as i32, false)
+        dec.decode_float(Some(packet), &mut pcm, FRAME_SIZE as i32, false)
             .unwrap();
     }
 
@@ -591,9 +591,9 @@ fn test_fec_then_normal_decode_valid_state() {
     let mut dec = OpusDecoder::new(SampleRate::Hz16000, Channels::Mono).unwrap();
 
     // Decode frames 0-3 normally
-    for i in 0..4 {
+    for packet in packets.iter().take(4) {
         let mut pcm = vec![0.0f32; FRAME_SIZE];
-        dec.decode_float(Some(&packets[i]), &mut pcm, FRAME_SIZE as i32, false)
+        dec.decode_float(Some(packet), &mut pcm, FRAME_SIZE as i32, false)
             .unwrap();
     }
 
@@ -602,9 +602,9 @@ fn test_fec_then_normal_decode_valid_state() {
     let _ = dec.decode_float(Some(&packets[5]), &mut fec_pcm, FRAME_SIZE as i32, true);
 
     // Now decode frames 5-9 normally - decoder state should be consistent
-    for i in 5..NUM_FRAMES {
+    for (i, packet) in packets.iter().enumerate().take(NUM_FRAMES).skip(5) {
         let mut pcm = vec![0.0f32; FRAME_SIZE];
-        let result = dec.decode_float(Some(&packets[i]), &mut pcm, FRAME_SIZE as i32, false);
+        let result = dec.decode_float(Some(packet), &mut pcm, FRAME_SIZE as i32, false);
         assert!(
             result.is_ok(),
             "Frame {i}: normal decode after FEC should succeed: {:?}",

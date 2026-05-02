@@ -562,8 +562,8 @@ mod tests {
         );
 
         // With silence input, mid and side should be zero
-        for i in 0..buf_len {
-            assert_eq!(x1[i], 0, "mid[{}] should be zero for silence", i);
+        for (i, &sample) in x1.iter().enumerate().take(buf_len) {
+            assert_eq!(sample, 0, "mid[{}] should be zero for silence", i);
         }
     }
 

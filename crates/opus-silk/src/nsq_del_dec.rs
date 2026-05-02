@@ -907,11 +907,13 @@ mod tests {
         x16[..copy_len].copy_from_slice(&signal[..copy_len]);
 
         let mut nsq_state = NsqState::new();
-        let mut indices = SideInfoIndices::default();
-        indices.signal_type = signal_type as i8;
-        indices.quant_offset_type = 0;
-        indices.nlsf_interp_coef_q2 = 4; // No interpolation
-        indices.seed = 0;
+        let mut indices = SideInfoIndices {
+            signal_type: signal_type as i8,
+            quant_offset_type: 0,
+            nlsf_interp_coef_q2: 4, // No interpolation
+            seed: 0,
+            ..SideInfoIndices::default()
+        };
 
         let mut pulses = vec![0i8; frame_length as usize];
 
@@ -1004,11 +1006,13 @@ mod tests {
         x16[..copy_len].copy_from_slice(&signal[..copy_len]);
 
         let mut nsq_state = NsqState::new();
-        let mut indices = SideInfoIndices::default();
-        indices.signal_type = signal_type as i8;
-        indices.quant_offset_type = 0;
-        indices.nlsf_interp_coef_q2 = 4;
-        indices.seed = 0;
+        let mut indices = SideInfoIndices {
+            signal_type: signal_type as i8,
+            quant_offset_type: 0,
+            nlsf_interp_coef_q2: 4,
+            seed: 0,
+            ..SideInfoIndices::default()
+        };
 
         let mut pulses = vec![0i8; frame_length as usize];
 
@@ -1087,8 +1091,8 @@ mod tests {
         // Generate a simple test signal (sine-like pattern)
         let frame_len = 320usize;
         let mut signal = vec![0i16; frame_len];
-        for i in 0..frame_len {
-            signal[i] = ((i as f64 * 0.1).sin() * 5000.0) as i16;
+        for (i, sample) in signal.iter_mut().enumerate() {
+            *sample = ((i as f64 * 0.1).sin() * 5000.0) as i16;
         }
 
         let (_nsq, pulses) = run_del_dec_nsq(2, &signal, TYPE_UNVOICED, 0);
@@ -1097,7 +1101,7 @@ mod tests {
         // r_Q10 is clamped to [-31<<10, 30<<10], so after rshift_round by 10, values are in [-31, 31].
         for (i, &p) in pulses.iter().enumerate() {
             assert!(
-                p >= -31 && p <= 31,
+                (-31..=31).contains(&p),
                 "Pulse {} out of range: {} (should be in [-31, 31])",
                 i,
                 p
@@ -1117,8 +1121,8 @@ mod tests {
         // Test with different numbers of states (2, 3, 4) all produce valid output
         let frame_len = 320usize;
         let mut signal = vec![0i16; frame_len];
-        for i in 0..frame_len {
-            signal[i] = ((i as f64 * 0.05).sin() * 3000.0) as i16;
+        for (i, sample) in signal.iter_mut().enumerate() {
+            *sample = ((i as f64 * 0.05).sin() * 3000.0) as i16;
         }
 
         for n_states in [2, 3, 4] {
@@ -1127,7 +1131,7 @@ mod tests {
             // Raw NSQ pulses in [-31, 31]
             for &p in pulses.iter() {
                 assert!(
-                    p >= -31 && p <= 31,
+                    (-31..=31).contains(&p),
                     "nStates={}: Pulse out of range: {}",
                     n_states,
                     p
@@ -1158,19 +1162,21 @@ mod tests {
         let shaping_lpc_order = 16i32;
 
         let mut signal = vec![0i16; frame_len];
-        for i in 0..frame_len {
-            signal[i] = ((i as f64 * 0.08).sin() * 4000.0) as i16;
+        for (i, sample) in signal.iter_mut().enumerate() {
+            *sample = ((i as f64 * 0.08).sin() * 4000.0) as i16;
         }
 
         let mut non_zero_counts = Vec::new();
 
         for &lambda_q10 in &[512, 2048, 4096] {
             let mut nsq_state = NsqState::new();
-            let mut indices = SideInfoIndices::default();
-            indices.signal_type = TYPE_UNVOICED as i8;
-            indices.quant_offset_type = 0;
-            indices.nlsf_interp_coef_q2 = 4;
-            indices.seed = 0;
+            let mut indices = SideInfoIndices {
+                signal_type: TYPE_UNVOICED as i8,
+                quant_offset_type: 0,
+                nlsf_interp_coef_q2: 4,
+                seed: 0,
+                ..SideInfoIndices::default()
+            };
 
             let mut pulses = vec![0i8; frame_length as usize];
 
@@ -1251,17 +1257,17 @@ mod tests {
         let frame_len = 320usize;
         let pitch_period = 80; // 200 Hz at 16kHz
         let mut signal = vec![0i16; frame_len];
-        for i in 0..frame_len {
+        for (i, sample) in signal.iter_mut().enumerate() {
             // Quasi-periodic signal
             let phase = (i % pitch_period) as f64 / pitch_period as f64 * std::f64::consts::TAU;
-            signal[i] = (phase.sin() * 4000.0) as i16;
+            *sample = (phase.sin() * 4000.0) as i16;
         }
 
         let (_nsq, pulses) = run_del_dec_nsq(2, &signal, TYPE_VOICED, pitch_period as i32);
 
         // All pulses should be in valid raw NSQ range
         for &p in pulses.iter() {
-            assert!(p >= -31 && p <= 31, "Voiced pulse out of range: {}", p);
+            assert!((-31..=31).contains(&p), "Voiced pulse out of range: {}", p);
         }
 
         let non_zero_count = pulses.iter().filter(|&&p| p != 0).count();

@@ -19,7 +19,14 @@ fn sgemv(out: &mut [f32], weights: &[f32], rows: usize, cols: usize, col_stride:
 }
 
 /// 16-wide unrolled sgemv. Matches C `sgemv16x1`.
-fn sgemv16x1(out: &mut [f32], weights: &[f32], rows: usize, cols: usize, col_stride: usize, x: &[f32]) {
+fn sgemv16x1(
+    out: &mut [f32],
+    weights: &[f32],
+    rows: usize,
+    cols: usize,
+    col_stride: usize,
+    x: &[f32],
+) {
     for v in out[..rows].iter_mut() {
         *v = 0.0;
     }
@@ -51,7 +58,14 @@ fn sgemv16x1(out: &mut [f32], weights: &[f32], rows: usize, cols: usize, col_str
 }
 
 /// 8-wide unrolled sgemv. Matches C `sgemv8x1`.
-fn sgemv8x1(out: &mut [f32], weights: &[f32], rows: usize, cols: usize, col_stride: usize, x: &[f32]) {
+fn sgemv8x1(
+    out: &mut [f32],
+    weights: &[f32],
+    rows: usize,
+    cols: usize,
+    col_stride: usize,
+    x: &[f32],
+) {
     for v in out[..rows].iter_mut() {
         *v = 0.0;
     }
@@ -149,7 +163,12 @@ const USE_SU_BIAS: bool = true;
 #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
 const USE_SU_BIAS: bool = false;
 
-#[cfg(not(any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64", target_arch = "arm")))]
+#[cfg(not(any(
+    target_arch = "x86",
+    target_arch = "x86_64",
+    target_arch = "aarch64",
+    target_arch = "arm"
+)))]
 const USE_SU_BIAS: bool = false; // generic fallback uses signed quantization (matching C vec.h)
 
 /// Quantize float input for int8 matmul, architecture-dependent.
@@ -171,9 +190,9 @@ fn quantize_input(xq_unsigned: &mut [u8], xq_signed: &mut [i8], x: &[f32], cols:
 #[inline(always)]
 fn read_quantized(xq_unsigned: &[u8], xq_signed: &[i8], idx: usize) -> i32 {
     if USE_SU_BIAS {
-        xq_unsigned[idx] as i32  // u8 -> i32: zero-extend (0..255)
+        xq_unsigned[idx] as i32 // u8 -> i32: zero-extend (0..255)
     } else {
-        xq_signed[idx] as i32    // i8 -> i32: sign-extend (-128..127)
+        xq_signed[idx] as i32 // i8 -> i32: sign-extend (-128..127)
     }
 }
 
@@ -200,14 +219,38 @@ fn cgemv8x4(out: &mut [f32], w: &[i8], scale: &[f32], rows: usize, cols: usize, 
             let xj2 = read_quantized(&xq_u, &xq_s, j + 2);
             let xj3 = read_quantized(&xq_u, &xq_s, j + 3);
             let y = &mut out[i..];
-            y[0] += (w[wi] as i32 * xj0 + w[wi + 1] as i32 * xj1 + w[wi + 2] as i32 * xj2 + w[wi + 3] as i32 * xj3) as f32;
-            y[1] += (w[wi + 4] as i32 * xj0 + w[wi + 5] as i32 * xj1 + w[wi + 6] as i32 * xj2 + w[wi + 7] as i32 * xj3) as f32;
-            y[2] += (w[wi + 8] as i32 * xj0 + w[wi + 9] as i32 * xj1 + w[wi + 10] as i32 * xj2 + w[wi + 11] as i32 * xj3) as f32;
-            y[3] += (w[wi + 12] as i32 * xj0 + w[wi + 13] as i32 * xj1 + w[wi + 14] as i32 * xj2 + w[wi + 15] as i32 * xj3) as f32;
-            y[4] += (w[wi + 16] as i32 * xj0 + w[wi + 17] as i32 * xj1 + w[wi + 18] as i32 * xj2 + w[wi + 19] as i32 * xj3) as f32;
-            y[5] += (w[wi + 20] as i32 * xj0 + w[wi + 21] as i32 * xj1 + w[wi + 22] as i32 * xj2 + w[wi + 23] as i32 * xj3) as f32;
-            y[6] += (w[wi + 24] as i32 * xj0 + w[wi + 25] as i32 * xj1 + w[wi + 26] as i32 * xj2 + w[wi + 27] as i32 * xj3) as f32;
-            y[7] += (w[wi + 28] as i32 * xj0 + w[wi + 29] as i32 * xj1 + w[wi + 30] as i32 * xj2 + w[wi + 31] as i32 * xj3) as f32;
+            y[0] += (w[wi] as i32 * xj0
+                + w[wi + 1] as i32 * xj1
+                + w[wi + 2] as i32 * xj2
+                + w[wi + 3] as i32 * xj3) as f32;
+            y[1] += (w[wi + 4] as i32 * xj0
+                + w[wi + 5] as i32 * xj1
+                + w[wi + 6] as i32 * xj2
+                + w[wi + 7] as i32 * xj3) as f32;
+            y[2] += (w[wi + 8] as i32 * xj0
+                + w[wi + 9] as i32 * xj1
+                + w[wi + 10] as i32 * xj2
+                + w[wi + 11] as i32 * xj3) as f32;
+            y[3] += (w[wi + 12] as i32 * xj0
+                + w[wi + 13] as i32 * xj1
+                + w[wi + 14] as i32 * xj2
+                + w[wi + 15] as i32 * xj3) as f32;
+            y[4] += (w[wi + 16] as i32 * xj0
+                + w[wi + 17] as i32 * xj1
+                + w[wi + 18] as i32 * xj2
+                + w[wi + 19] as i32 * xj3) as f32;
+            y[5] += (w[wi + 20] as i32 * xj0
+                + w[wi + 21] as i32 * xj1
+                + w[wi + 22] as i32 * xj2
+                + w[wi + 23] as i32 * xj3) as f32;
+            y[6] += (w[wi + 24] as i32 * xj0
+                + w[wi + 25] as i32 * xj1
+                + w[wi + 26] as i32 * xj2
+                + w[wi + 27] as i32 * xj3) as f32;
+            y[7] += (w[wi + 28] as i32 * xj0
+                + w[wi + 29] as i32 * xj1
+                + w[wi + 30] as i32 * xj2
+                + w[wi + 31] as i32 * xj3) as f32;
             wi += 32;
             j += 4;
         }
@@ -220,7 +263,15 @@ fn cgemv8x4(out: &mut [f32], w: &[i8], scale: &[f32], rows: usize, cols: usize, 
 }
 
 /// Sparse quantized int8 matrix-vector multiply with 8x4 blocking.
-fn sparse_cgemv8x4(out: &mut [f32], w: &[i8], idx: &[i32], scale: &[f32], rows: usize, cols: usize, x: &[f32]) {
+fn sparse_cgemv8x4(
+    out: &mut [f32],
+    w: &[i8],
+    idx: &[i32],
+    scale: &[f32],
+    rows: usize,
+    cols: usize,
+    x: &[f32],
+) {
     debug_assert!(cols <= MAX_INPUTS);
     let mut xq_u = [0u8; MAX_INPUTS];
     let mut xq_s = [0i8; MAX_INPUTS];
@@ -244,14 +295,38 @@ fn sparse_cgemv8x4(out: &mut [f32], w: &[i8], idx: &[i32], scale: &[f32], rows: 
             let xj2 = read_quantized(&xq_u, &xq_s, pos + 2);
             let xj3 = read_quantized(&xq_u, &xq_s, pos + 3);
             let y = &mut out[i..];
-            y[0] += (w[wi] as i32 * xj0 + w[wi + 1] as i32 * xj1 + w[wi + 2] as i32 * xj2 + w[wi + 3] as i32 * xj3) as f32;
-            y[1] += (w[wi + 4] as i32 * xj0 + w[wi + 5] as i32 * xj1 + w[wi + 6] as i32 * xj2 + w[wi + 7] as i32 * xj3) as f32;
-            y[2] += (w[wi + 8] as i32 * xj0 + w[wi + 9] as i32 * xj1 + w[wi + 10] as i32 * xj2 + w[wi + 11] as i32 * xj3) as f32;
-            y[3] += (w[wi + 12] as i32 * xj0 + w[wi + 13] as i32 * xj1 + w[wi + 14] as i32 * xj2 + w[wi + 15] as i32 * xj3) as f32;
-            y[4] += (w[wi + 16] as i32 * xj0 + w[wi + 17] as i32 * xj1 + w[wi + 18] as i32 * xj2 + w[wi + 19] as i32 * xj3) as f32;
-            y[5] += (w[wi + 20] as i32 * xj0 + w[wi + 21] as i32 * xj1 + w[wi + 22] as i32 * xj2 + w[wi + 23] as i32 * xj3) as f32;
-            y[6] += (w[wi + 24] as i32 * xj0 + w[wi + 25] as i32 * xj1 + w[wi + 26] as i32 * xj2 + w[wi + 27] as i32 * xj3) as f32;
-            y[7] += (w[wi + 28] as i32 * xj0 + w[wi + 29] as i32 * xj1 + w[wi + 30] as i32 * xj2 + w[wi + 31] as i32 * xj3) as f32;
+            y[0] += (w[wi] as i32 * xj0
+                + w[wi + 1] as i32 * xj1
+                + w[wi + 2] as i32 * xj2
+                + w[wi + 3] as i32 * xj3) as f32;
+            y[1] += (w[wi + 4] as i32 * xj0
+                + w[wi + 5] as i32 * xj1
+                + w[wi + 6] as i32 * xj2
+                + w[wi + 7] as i32 * xj3) as f32;
+            y[2] += (w[wi + 8] as i32 * xj0
+                + w[wi + 9] as i32 * xj1
+                + w[wi + 10] as i32 * xj2
+                + w[wi + 11] as i32 * xj3) as f32;
+            y[3] += (w[wi + 12] as i32 * xj0
+                + w[wi + 13] as i32 * xj1
+                + w[wi + 14] as i32 * xj2
+                + w[wi + 15] as i32 * xj3) as f32;
+            y[4] += (w[wi + 16] as i32 * xj0
+                + w[wi + 17] as i32 * xj1
+                + w[wi + 18] as i32 * xj2
+                + w[wi + 19] as i32 * xj3) as f32;
+            y[5] += (w[wi + 20] as i32 * xj0
+                + w[wi + 21] as i32 * xj1
+                + w[wi + 22] as i32 * xj2
+                + w[wi + 23] as i32 * xj3) as f32;
+            y[6] += (w[wi + 24] as i32 * xj0
+                + w[wi + 25] as i32 * xj1
+                + w[wi + 26] as i32 * xj2
+                + w[wi + 27] as i32 * xj3) as f32;
+            y[7] += (w[wi + 28] as i32 * xj0
+                + w[wi + 29] as i32 * xj1
+                + w[wi + 30] as i32 * xj2
+                + w[wi + 31] as i32 * xj3) as f32;
             wi += 32;
         }
         i += 8;

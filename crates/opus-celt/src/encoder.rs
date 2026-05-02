@@ -1978,8 +1978,8 @@ mod tests {
         // Generate a 440 Hz sine wave
         let n = 960; // 20ms frame
         let mut pcm = vec![0.0f32; n];
-        for i in 0..n {
-            pcm[i] = 10000.0 * (2.0 * std::f32::consts::PI * 440.0 * i as f32 / 48000.0).sin();
+        for (i, sample) in pcm.iter_mut().enumerate() {
+            *sample = 10000.0 * (2.0 * std::f32::consts::PI * 440.0 * i as f32 / 48000.0).sin();
         }
 
         // Encode
@@ -2008,8 +2008,8 @@ mod tests {
             let n = 960;
             let mut pcm = vec![0.0f32; n];
             let freq = 440.0 + frame as f32 * 100.0;
-            for i in 0..n {
-                pcm[i] = 5000.0
+            for (i, sample) in pcm.iter_mut().enumerate() {
+                *sample = 5000.0
                     * (2.0 * std::f32::consts::PI * freq * (frame * n + i) as f32 / 48000.0).sin();
             }
 

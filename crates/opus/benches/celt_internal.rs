@@ -38,7 +38,7 @@ fn bench_fft(c: &mut Criterion) {
 
         group.throughput(Throughput::Elements(nfft as u64));
 
-        group.bench_function(&format!("rust_fft_{nfft}"), |b| {
+        group.bench_function(format!("rust_fft_{nfft}"), |b| {
             b.iter_batched(
                 || {
                     (
@@ -54,7 +54,7 @@ fn bench_fft(c: &mut Criterion) {
         let fin_r: Vec<f32> = input.iter().map(|c| c.r).collect();
         let fin_i: Vec<f32> = input.iter().map(|c| c.i).collect();
 
-        group.bench_function(&format!("c_fft_{nfft}"), |b| {
+        group.bench_function(format!("c_fft_{nfft}"), |b| {
             c_fft_bench_init(nfft);
             b.iter_batched(
                 || (vec![0.0f32; nfft], vec![0.0f32; nfft]),

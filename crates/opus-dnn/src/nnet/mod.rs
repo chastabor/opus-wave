@@ -1,6 +1,6 @@
 pub mod activations;
-pub mod linear;
 pub mod conv2d;
+pub mod linear;
 pub mod ops;
 pub mod weights;
 
@@ -78,12 +78,7 @@ pub struct Conv2dLayer {
 }
 
 impl Conv2dLayer {
-    pub fn new(
-        in_channels: usize,
-        out_channels: usize,
-        ktime: usize,
-        kheight: usize,
-    ) -> Self {
+    pub fn new(in_channels: usize, out_channels: usize, ktime: usize, kheight: usize) -> Self {
         Conv2dLayer {
             bias: None,
             float_weights: None,

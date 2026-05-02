@@ -838,6 +838,7 @@ pub fn silk_pitch_analysis_simple(
 /// base lag. Try each contour from the appropriate table, find the one that best
 /// matches the actual pitch_lags. The lag_index is `(base_lag - min_lag)`.
 #[allow(dead_code)] // Contour selection now done inside silk_pitch_analysis_core
+#[allow(clippy::needless_range_loop)] // contour `c` indexes the inner dim of [k][c] tables
 pub fn silk_find_pitch_contour(
     contour_index: &mut i8,
     lag_index: &mut i16,
@@ -1011,8 +1012,8 @@ mod tests {
 
         // Generate 300Hz tone at 16kHz
         let mut frame = vec![0i16; expected_len];
-        for i in 0..expected_len {
-            frame[i] = (10000.0 * (2.0 * PI * 300.0 * i as f64 / 16000.0).sin()) as i16;
+        for (i, sample) in frame.iter_mut().enumerate() {
+            *sample = (10000.0 * (2.0 * PI * 300.0 * i as f64 / 16000.0).sin()) as i16;
         }
 
         let mut pitch_lags = [0i32; 4];
@@ -1042,12 +1043,12 @@ mod tests {
         eprintln!("Expected period: {:.1}", expected_period);
 
         assert_eq!(ret, 0, "300Hz tone should be detected as voiced");
-        for k in 0..4 {
+        for (k, &lag) in pitch_lags.iter().enumerate() {
             assert!(
-                (pitch_lags[k] - 53).abs() <= 2,
+                (lag - 53).abs() <= 2,
                 "Pitch lag [{}] = {} should be near 53",
                 k,
-                pitch_lags[k]
+                lag,
             );
         }
     }
@@ -1061,8 +1062,8 @@ mod tests {
 
         // Generate 300Hz tone at 16kHz
         let mut frame = vec![0i16; expected_len];
-        for i in 0..expected_len {
-            frame[i] = (10000.0 * (2.0 * PI * 300.0 * i as f64 / 16000.0).sin()) as i16;
+        for (i, sample) in frame.iter_mut().enumerate() {
+            *sample = (10000.0 * (2.0 * PI * 300.0 * i as f64 / 16000.0).sin()) as i16;
         }
 
         let mut pitch_lags = [0i32; 4];
@@ -1089,8 +1090,8 @@ mod tests {
 
         let mut frame = vec![0i16; total_len];
         // Only fill the frame portion (history is zero)
-        for i in ltp_mem_length..total_len {
-            frame[i] =
+        for (i, sample) in frame.iter_mut().enumerate().skip(ltp_mem_length) {
+            *sample =
                 (10000.0 * (2.0 * PI * 300.0 * (i - ltp_mem_length) as f64 / 16000.0).sin()) as i16;
         }
 

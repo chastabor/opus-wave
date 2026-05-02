@@ -4,8 +4,8 @@
 //! the `OsceInput` bridge struct, avoiding a direct opus-dnn → opus-silk dependency.
 
 use opus_dnn::osce::features::OsceInput;
-use opus_silk::DecoderControl;
 use opus_silk::ChannelState;
+use opus_silk::DecoderControl;
 
 /// Extract OSCE input from SILK decoder state after a frame decode.
 pub fn extract_osce_input<'a>(

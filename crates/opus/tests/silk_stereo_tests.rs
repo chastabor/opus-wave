@@ -174,9 +174,9 @@ fn generate_mono_sine(
     sample_offset: usize,
 ) -> Vec<f32> {
     let mut buf = vec![0.0f32; num_samples];
-    for i in 0..num_samples {
+    for (i, sample) in buf.iter_mut().enumerate() {
         let t = (sample_offset + i) as f32 / SAMPLE_RATE as f32;
-        buf[i] = amplitude * (2.0 * std::f32::consts::PI * freq * t).sin();
+        *sample = amplitude * (2.0 * std::f32::consts::PI * freq * t).sin();
     }
     buf
 }
@@ -1038,7 +1038,7 @@ fn test_stereo_packet_sizes_stable() {
 
     for (i, &sz) in stable_sizes.iter().enumerate() {
         assert!(
-            sz >= 2 && sz <= 1275,
+            (2..=1275).contains(&sz),
             "Frame {} stereo packet size {} is out of expected range",
             5 + i,
             sz

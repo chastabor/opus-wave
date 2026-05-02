@@ -1,7 +1,7 @@
 use super::*;
-use crate::nnet::{Activation, LinearLayer};
 use crate::nnet::activations::compute_activation;
 use crate::nnet::ops::compute_generic_conv1d;
+use crate::nnet::{Activation, LinearLayer};
 
 /// Process one frame through an adaptive spectral shaping layer.
 /// Matches C `adashape_process_frame` from nndsp.c.
@@ -31,7 +31,9 @@ pub fn adashape_process_frame(
     in_buffer[..feature_dim].copy_from_slice(&features[..feature_dim]);
 
     let tenv = &mut in_buffer[feature_dim..feature_dim + tenv_size + 1];
-    for v in tenv.iter_mut() { *v = 0.0; }
+    for v in tenv.iter_mut() {
+        *v = 0.0;
+    }
 
     // Temporal envelope: average absolute value per block
     let mut mean = 0.0f32;
@@ -51,8 +53,22 @@ pub fn adashape_process_frame(
     // Alpha1 paths: feature conv + temporal conv, then leaky ReLU
     let mut out_buffer = [0.0f32; ADASHAPE_MAX_FRAME_SIZE];
     let mut tmp_buffer = [0.0f32; ADASHAPE_MAX_FRAME_SIZE];
-    compute_generic_conv1d(alpha1f, &mut out_buffer[..hidden_dim], &mut state.conv_alpha1f_state, &in_buffer[..feature_dim], feature_dim, Activation::Linear);
-    compute_generic_conv1d(alpha1t, &mut tmp_buffer[..hidden_dim], &mut state.conv_alpha1t_state, &in_buffer[feature_dim..feature_dim + tenv_size + 1], tenv_size + 1, Activation::Linear);
+    compute_generic_conv1d(
+        alpha1f,
+        &mut out_buffer[..hidden_dim],
+        &mut state.conv_alpha1f_state,
+        &in_buffer[..feature_dim],
+        feature_dim,
+        Activation::Linear,
+    );
+    compute_generic_conv1d(
+        alpha1t,
+        &mut tmp_buffer[..hidden_dim],
+        &mut state.conv_alpha1t_state,
+        &in_buffer[feature_dim..feature_dim + tenv_size + 1],
+        tenv_size + 1,
+        Activation::Linear,
+    );
 
     // Leaky ReLU: max(x, 0.2*x). Reuses in_buffer (features+tenv data already consumed).
     for i in 0..hidden_dim {
@@ -60,13 +76,21 @@ pub fn adashape_process_frame(
         in_buffer[i] = if tmp >= 0.0 { tmp } else { 0.2 * tmp };
     }
 
-    compute_generic_conv1d(alpha2, &mut tmp_buffer[..hidden_dim], &mut state.conv_alpha2_state, &in_buffer[..hidden_dim], hidden_dim, Activation::Linear);
+    compute_generic_conv1d(
+        alpha2,
+        &mut tmp_buffer[..hidden_dim],
+        &mut state.conv_alpha2_state,
+        &in_buffer[..hidden_dim],
+        hidden_dim,
+        Activation::Linear,
+    );
 
     // Upsample by linear interpolation
     for i in 0..hidden_dim {
         for k in 0..interpolate_k {
             let alpha = (k + 1) as f32 / interpolate_k as f32;
-            out_buffer[i * interpolate_k + k] = alpha * tmp_buffer[i] + (1.0 - alpha) * state.interpolate_state[0];
+            out_buffer[i * interpolate_k + k] =
+                alpha * tmp_buffer[i] + (1.0 - alpha) * state.interpolate_state[0];
         }
         state.interpolate_state[0] = tmp_buffer[i];
     }

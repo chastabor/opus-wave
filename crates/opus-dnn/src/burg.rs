@@ -43,7 +43,8 @@ pub fn silk_burg_analysis(
             let mut tmp2 = x_ptr[subfr_length - n - 1] as f64;
             for k in 0..n {
                 c_first_row[k] -= (x_ptr[n] as f64) * (x_ptr[n - k - 1] as f64);
-                c_last_row[k] -= (x_ptr[subfr_length - n - 1] as f64) * (x_ptr[subfr_length - n + k] as f64);
+                c_last_row[k] -=
+                    (x_ptr[subfr_length - n - 1] as f64) * (x_ptr[subfr_length - n + k] as f64);
                 let atmp = af[k];
                 tmp1 += (x_ptr[n - k - 1] as f64) * atmp;
                 tmp2 += (x_ptr[subfr_length - n + k] as f64) * atmp;
@@ -140,9 +141,9 @@ fn energy_f64(data: &[f32], len: usize) -> f64 {
     let mut i = 0;
     while i < len.saturating_sub(3) {
         result += data[i] as f64 * data[i] as f64
-                + data[i + 1] as f64 * data[i + 1] as f64
-                + data[i + 2] as f64 * data[i + 2] as f64
-                + data[i + 3] as f64 * data[i + 3] as f64;
+            + data[i + 1] as f64 * data[i + 1] as f64
+            + data[i + 2] as f64 * data[i + 2] as f64
+            + data[i + 3] as f64 * data[i + 3] as f64;
         i += 4;
     }
     while i < len {
@@ -157,9 +158,9 @@ fn inner_product_f64(data1: &[f32], data2: &[f32], len: usize) -> f64 {
     let mut i = 0;
     while i < len.saturating_sub(3) {
         result += data1[i] as f64 * data2[i] as f64
-                + data1[i + 1] as f64 * data2[i + 1] as f64
-                + data1[i + 2] as f64 * data2[i + 2] as f64
-                + data1[i + 3] as f64 * data2[i + 3] as f64;
+            + data1[i + 1] as f64 * data2[i + 1] as f64
+            + data1[i + 2] as f64 * data2[i + 2] as f64
+            + data1[i + 3] as f64 * data2[i + 3] as f64;
         i += 4;
     }
     while i < len {

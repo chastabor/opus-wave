@@ -25,7 +25,9 @@ pub fn decoder_process_dred_extension(
     if extension.id != dred_ext_id {
         return;
     }
-    let Some(dnn) = decoder.dnn.as_mut() else { return };
+    let Some(dnn) = decoder.dnn.as_mut() else {
+        return;
+    };
     if !dnn.loaded {
         return;
     }
@@ -65,7 +67,9 @@ pub fn decoder_process_dred_extension(
 
 /// Update PLC state with a successfully decoded (good) packet.
 pub fn decoder_plc_update(decoder: &mut OpusDecoder, pcm: &[i16]) {
-    let Some(dnn) = decoder.dnn.as_mut() else { return };
+    let Some(dnn) = decoder.dnn.as_mut() else {
+        return;
+    };
     if !dnn.loaded {
         return;
     }
@@ -76,7 +80,9 @@ pub fn decoder_plc_update(decoder: &mut OpusDecoder, pcm: &[i16]) {
 /// Conceal a lost packet using DNN-based PLC.
 /// Returns true if DNN PLC was applied, false if not available.
 pub fn decoder_plc_conceal(decoder: &mut OpusDecoder, pcm: &mut [i16]) -> bool {
-    let Some(dnn) = decoder.dnn.as_mut() else { return false };
+    let Some(dnn) = decoder.dnn.as_mut() else {
+        return false;
+    };
     if !dnn.loaded {
         return false;
     }

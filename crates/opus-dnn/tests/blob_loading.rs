@@ -11,48 +11,64 @@ fn load_blob(name: &str) -> Option<Vec<opus_dnn::nnet::WeightArray>> {
 
 #[test]
 fn test_pitchdnn_init() {
-    let Some(arrays) = load_blob("pitchdnn.bin") else { return };
+    let Some(arrays) = load_blob("pitchdnn.bin") else {
+        return;
+    };
     opus_dnn::pitchdnn::init_pitchdnn(&arrays).expect("init_pitchdnn failed");
 }
 
 #[test]
 fn test_fargan_init() {
-    let Some(arrays) = load_blob("fargan.bin") else { return };
+    let Some(arrays) = load_blob("fargan.bin") else {
+        return;
+    };
     opus_dnn::fargan::init_fargan(&arrays).expect("init_fargan failed");
 }
 
 #[test]
 fn test_plcmodel_init() {
-    let Some(arrays) = load_blob("plcmodel.bin") else { return };
+    let Some(arrays) = load_blob("plcmodel.bin") else {
+        return;
+    };
     opus_dnn::lpcnet::plc::init_plcmodel(&arrays).expect("init_plcmodel failed");
 }
 
 #[test]
 fn test_rdovae_enc_init() {
-    let Some(arrays) = load_blob("rdovae_enc.bin") else { return };
+    let Some(arrays) = load_blob("rdovae_enc.bin") else {
+        return;
+    };
     opus_dnn::dred::rdovae_enc::init_rdovae_enc(&arrays).expect("init_rdovae_enc failed");
 }
 
 #[test]
 fn test_rdovae_dec_init() {
-    let Some(arrays) = load_blob("rdovae_dec.bin") else { return };
+    let Some(arrays) = load_blob("rdovae_dec.bin") else {
+        return;
+    };
     opus_dnn::dred::rdovae_dec::init_rdovae_dec(&arrays).expect("init_rdovae_dec failed");
 }
 
 #[test]
 fn test_lace_init() {
-    let Some(arrays) = load_blob("lace.bin") else { return };
+    let Some(arrays) = load_blob("lace.bin") else {
+        return;
+    };
     opus_dnn::osce::lace::init_lace(&arrays).expect("init_lace failed");
 }
 
 #[test]
 fn test_nolace_init() {
-    let Some(arrays) = load_blob("nolace.bin") else { return };
+    let Some(arrays) = load_blob("nolace.bin") else {
+        return;
+    };
     opus_dnn::osce::nolace::init_nolace(&arrays).expect("init_nolace failed");
 }
 
 #[test]
 fn test_bbwenet_init() {
-    let Some(arrays) = load_blob("bbwenet.bin") else { return };
+    let Some(arrays) = load_blob("bbwenet.bin") else {
+        return;
+    };
     opus_dnn::osce::bbwenet::init_bbwenet(&arrays).expect("init_bbwenet failed");
 }

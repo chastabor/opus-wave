@@ -1,6 +1,6 @@
-use super::{Activation, LinearLayer};
 use super::activations::compute_activation;
 use super::linear::compute_linear;
+use super::{Activation, LinearLayer};
 
 /// Maximum RNN neuron count across all models.
 /// Matches C `MAX_RNN_NEURONS_ALL` (derived from model constants).
@@ -36,7 +36,10 @@ pub fn compute_generic_gru(
     state: &mut [f32],
     input: &[f32],
 ) {
-    debug_assert_eq!(3 * recurrent_weights.nb_inputs, recurrent_weights.nb_outputs);
+    debug_assert_eq!(
+        3 * recurrent_weights.nb_inputs,
+        recurrent_weights.nb_outputs
+    );
     debug_assert_eq!(input_weights.nb_outputs, recurrent_weights.nb_outputs);
     let n = recurrent_weights.nb_inputs;
     debug_assert!(n <= MAX_RNN_NEURONS);
@@ -67,11 +70,7 @@ pub fn compute_generic_gru(
 
 /// Gated Linear Unit: output = input * sigmoid(W * input).
 /// Matches C `compute_glu` from nnet.c.
-pub fn compute_glu(
-    layer: &LinearLayer,
-    output: &mut [f32],
-    input: &[f32],
-) {
+pub fn compute_glu(layer: &LinearLayer, output: &mut [f32], input: &[f32]) {
     debug_assert_eq!(layer.nb_inputs, layer.nb_outputs);
     let n = layer.nb_outputs;
     debug_assert!(n <= MAX_INPUTS);
@@ -86,10 +85,7 @@ pub fn compute_glu(
 
 /// In-place GLU: data = data * sigmoid(W * data).
 /// Avoids the aliasing issue when caller wants output == input.
-pub fn compute_glu_inplace(
-    layer: &LinearLayer,
-    data: &mut [f32],
-) {
+pub fn compute_glu_inplace(layer: &LinearLayer, data: &mut [f32]) {
     debug_assert_eq!(layer.nb_inputs, layer.nb_outputs);
     let n = layer.nb_outputs;
     debug_assert!(n <= MAX_INPUTS);
@@ -162,8 +158,9 @@ pub fn compute_generic_conv1d_dilation(
         }
     } else {
         for i in 0..ksize - 1 {
-            tmp[i * input_size..(i + 1) * input_size]
-                .copy_from_slice(&mem[i * input_size * dilation..i * input_size * dilation + input_size]);
+            tmp[i * input_size..(i + 1) * input_size].copy_from_slice(
+                &mem[i * input_size * dilation..i * input_size * dilation + input_size],
+            );
         }
     }
     tmp[(ksize - 1) * input_size..ksize * input_size].copy_from_slice(&input[..input_size]);

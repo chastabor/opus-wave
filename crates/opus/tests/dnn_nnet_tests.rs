@@ -6,11 +6,10 @@
 mod common;
 
 use opus_dnn::nnet::Activation;
+use opus_dnn::nnet::LinearLayer;
 use opus_dnn::nnet::activations::compute_activation;
 use opus_dnn::nnet::linear::compute_linear;
 use opus_dnn::nnet::ops::{compute_generic_dense, compute_generic_gru};
-use opus_dnn::nnet::LinearLayer;
-use opus_ffi;
 
 use common::assert_f32_slice_close as assert_close;
 
@@ -186,10 +185,12 @@ fn test_gru_vs_c() {
     // Generate pseudo-random weights
     let mut rng = 123u32;
     let mut rand_vec = |size: usize| -> Vec<f32> {
-        (0..size).map(|_| {
-            rng = rng.wrapping_mul(1103515245).wrapping_add(12345);
-            ((rng >> 16) as f32 / 32768.0) - 1.0
-        }).collect()
+        (0..size)
+            .map(|_| {
+                rng = rng.wrapping_mul(1103515245).wrapping_add(12345);
+                ((rng >> 16) as f32 / 32768.0) - 1.0
+            })
+            .collect()
     };
 
     let input_w = rand_vec(ni * n3);
@@ -231,10 +232,13 @@ fn test_gru_vs_c() {
     let mut c_state = vec![0.0f32; nn];
     opus_ffi::c_compute_generic_gru(
         &mut c_state,
-        &input_w, &input_b,
-        &recur_w, &recur_b,
+        &input_w,
+        &input_b,
+        &recur_w,
+        &recur_b,
         &recur_diag,
-        ni, nn,
+        ni,
+        nn,
         &input_data,
     );
 
@@ -251,10 +255,12 @@ fn test_gru_multi_step_vs_c() {
 
     let mut rng = 456u32;
     let mut rand_vec = |size: usize| -> Vec<f32> {
-        (0..size).map(|_| {
-            rng = rng.wrapping_mul(1103515245).wrapping_add(12345);
-            ((rng >> 16) as f32 / 65536.0) - 0.5
-        }).collect()
+        (0..size)
+            .map(|_| {
+                rng = rng.wrapping_mul(1103515245).wrapping_add(12345);
+                ((rng >> 16) as f32 / 65536.0) - 0.5
+            })
+            .collect()
     };
 
     let input_w = rand_vec(ni * n3);
@@ -291,15 +297,20 @@ fn test_gru_multi_step_vs_c() {
 
     // Run 10 steps with different inputs
     for step in 0..10 {
-        let input_data: Vec<f32> = (0..ni).map(|i| ((step * ni + i) as f32 * 0.1).sin()).collect();
+        let input_data: Vec<f32> = (0..ni)
+            .map(|i| ((step * ni + i) as f32 * 0.1).sin())
+            .collect();
 
         compute_generic_gru(&input_layer, &recur_layer, &mut rust_state, &input_data);
         opus_ffi::c_compute_generic_gru(
             &mut c_state,
-            &input_w, &input_b,
-            &recur_w, &recur_b,
+            &input_w,
+            &input_b,
+            &recur_w,
+            &recur_b,
             &recur_diag,
-            ni, nn,
+            ni,
+            nn,
             &input_data,
         );
     }
@@ -313,9 +324,9 @@ fn test_gru_multi_step_vs_c() {
 fn test_activation_edge_cases_vs_c() {
     // Test extreme values, zero, negative zero, very small values.
     let input = [
-        0.0f32, -0.0, 1e-38, -1e-38,  // zero and subnormals
-        1e10, -1e10, 100.0, -100.0,    // large magnitudes
-        1e-7, -1e-7, 0.5, -0.5,        // typical range
+        0.0f32, -0.0, 1e-38, -1e-38, // zero and subnormals
+        1e10, -1e10, 100.0, -100.0, // large magnitudes
+        1e-7, -1e-7, 0.5, -0.5, // typical range
     ];
     let n = input.len();
 
@@ -494,10 +505,12 @@ fn test_gru_nonzero_initial_state_vs_c() {
 
     let mut rng = 999u32;
     let mut rand_vec = |size: usize| -> Vec<f32> {
-        (0..size).map(|_| {
-            rng = rng.wrapping_mul(1103515245).wrapping_add(12345);
-            ((rng >> 16) as f32 / 32768.0) - 1.0
-        }).collect()
+        (0..size)
+            .map(|_| {
+                rng = rng.wrapping_mul(1103515245).wrapping_add(12345);
+                ((rng >> 16) as f32 / 32768.0) - 1.0
+            })
+            .collect()
     };
 
     let input_w = rand_vec(ni * n3);
@@ -540,10 +553,13 @@ fn test_gru_nonzero_initial_state_vs_c() {
     compute_generic_gru(&input_layer, &recur_layer, &mut rust_state, &input_data);
     opus_ffi::c_compute_generic_gru(
         &mut c_state,
-        &input_w, &input_b,
-        &recur_w, &recur_b,
+        &input_w,
+        &input_b,
+        &recur_w,
+        &recur_b,
         &recur_diag,
-        ni, nn,
+        ni,
+        nn,
         &input_data,
     );
 
@@ -551,14 +567,19 @@ fn test_gru_nonzero_initial_state_vs_c() {
 
     // Continue for 5 more steps to verify accumulation from non-zero start
     for step in 1..6 {
-        let input_data: Vec<f32> = (0..ni).map(|i| ((step * ni + i) as f32 * 0.2).cos()).collect();
+        let input_data: Vec<f32> = (0..ni)
+            .map(|i| ((step * ni + i) as f32 * 0.2).cos())
+            .collect();
         compute_generic_gru(&input_layer, &recur_layer, &mut rust_state, &input_data);
         opus_ffi::c_compute_generic_gru(
             &mut c_state,
-            &input_w, &input_b,
-            &recur_w, &recur_b,
+            &input_w,
+            &input_b,
+            &recur_w,
+            &recur_b,
             &recur_diag,
-            ni, nn,
+            ni,
+            nn,
             &input_data,
         );
     }

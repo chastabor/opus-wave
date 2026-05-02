@@ -62,8 +62,8 @@ const NUM_WARMUP_FRAMES: usize = 10;
 /// Generate a sine tone at the given frequency and amplitude.
 fn generate_tone(freq: f32, amplitude: f32, num_samples: usize, sample_offset: usize) -> Vec<f32> {
     let mut buf = vec![0.0f32; num_samples];
-    for i in 0..num_samples {
-        buf[i] = amplitude
+    for (i, sample) in buf.iter_mut().enumerate() {
+        *sample = amplitude
             * (2.0 * std::f32::consts::PI * freq * (sample_offset + i) as f32 / SAMPLE_RATE as f32)
                 .sin();
     }
@@ -79,10 +79,10 @@ fn generate_silence(num_samples: usize) -> Vec<f32> {
 fn generate_noise(amplitude: f32, num_samples: usize, seed: u32) -> Vec<f32> {
     let mut state = seed;
     let mut buf = vec![0.0f32; num_samples];
-    for i in 0..num_samples {
+    for sample in buf.iter_mut() {
         state = state.wrapping_mul(1103515245).wrapping_add(12345);
         let val = ((state >> 16) & 0x7FFF) as f32 / 16384.0 - 1.0;
-        buf[i] = amplitude * val;
+        *sample = amplitude * val;
     }
     buf
 }
@@ -422,7 +422,7 @@ fn test_encoder_produces_silk_mode_packets() {
     for (i, pkt) in packets.iter().enumerate() {
         assert!(!pkt.is_empty(), "Frame {i} should produce a packet");
 
-        let mode = opus_packet_get_mode(&pkt);
+        let mode = opus_packet_get_mode(pkt);
         assert_eq!(
             mode,
             Mode::SilkOnly,
@@ -431,7 +431,7 @@ fn test_encoder_produces_silk_mode_packets() {
             mode
         );
 
-        let bandwidth = opus_packet_get_bandwidth(&pkt);
+        let bandwidth = opus_packet_get_bandwidth(pkt);
         // At 16kHz, encoder should use NB or WB SILK
         assert!(
             bandwidth <= Bandwidth::Wideband,
@@ -574,7 +574,7 @@ fn test_silk_pitch_300hz_packet_sizes_stable() {
     // that sizes are consistent across frames (stable encoding).
     for (i, &sz) in stable_sizes.iter().enumerate() {
         assert!(
-            sz >= 2 && sz <= 500,
+            (2..=500).contains(&sz),
             "Frame {} packet size {} is out of expected range for SILK encoding",
             5 + i,
             sz
@@ -728,7 +728,7 @@ fn test_silk_tone_to_noise_transition() {
         let mut packet = vec![0u8; 1500];
         let nbytes = enc
             .encode_float(&input, FRAME_SIZE as i32, &mut packet, 1500)
-            .expect(&format!("Encode should succeed at frame {frame_idx}"));
+            .unwrap_or_else(|_| panic!("Encode should succeed at frame {frame_idx}"));
         assert!(nbytes > 0, "Frame {frame_idx} should produce bytes");
 
         let mut pcm = vec![0.0f32; FRAME_SIZE];

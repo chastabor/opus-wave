@@ -53,18 +53,25 @@ impl DnnDecoderState {
         let dred_stats = opus_dnn::dred::stats::init_dred_stats();
         let latent_dim = rdovae_dec.latent_dim;
         let state_dim = rdovae_dec.state_dim;
-        let rdovae_dec_state =
-            opus_dnn::dred::rdovae_dec::rdovae_dec_state_init(&rdovae_dec);
+        let rdovae_dec_state = opus_dnn::dred::rdovae_dec::rdovae_dec_state_init(&rdovae_dec);
         let dred = opus_dnn::dred::decoder::OpusDred::new(latent_dim, state_dim);
 
         // Initialize per-channel OSCE state from model dimensions
         let osce_lace_state = [
-            osce.lace.as_ref().map(opus_dnn::osce::lace::lace_state_init),
-            osce.lace.as_ref().map(opus_dnn::osce::lace::lace_state_init),
+            osce.lace
+                .as_ref()
+                .map(opus_dnn::osce::lace::lace_state_init),
+            osce.lace
+                .as_ref()
+                .map(opus_dnn::osce::lace::lace_state_init),
         ];
         let osce_nolace_state = [
-            osce.nolace.as_ref().map(opus_dnn::osce::nolace::nolace_state_init),
-            osce.nolace.as_ref().map(opus_dnn::osce::nolace::nolace_state_init),
+            osce.nolace
+                .as_ref()
+                .map(opus_dnn::osce::nolace::nolace_state_init),
+            osce.nolace
+                .as_ref()
+                .map(opus_dnn::osce::nolace::nolace_state_init),
         ];
 
         Ok(DnnDecoderState {
@@ -109,8 +116,7 @@ impl DnnEncoderState {
         let (rdovae_enc, lpcnet_enc_state) =
             opus_dnn::load::load_encoder_dnn(data).map_err(|_| OpusError::BadArg)?;
 
-        let dred_enc =
-            opus_dnn::dred::encoder::dred_encoder_init(rdovae_enc, lpcnet_enc_state);
+        let dred_enc = opus_dnn::dred::encoder::dred_encoder_init(rdovae_enc, lpcnet_enc_state);
         let dred_stats = opus_dnn::dred::stats::init_dred_stats();
 
         Ok(DnnEncoderState {

@@ -113,23 +113,23 @@ fn anti_collapse_with_collapsed_bands() {
     for i in 5..10 {
         let band_start = mm * m.ebands[i] as usize;
         let band_end = mm * m.ebands[i + 1] as usize;
-        for j in band_start..band_end {
-            rust_x[j] = 0.0;
+        for x in rust_x.iter_mut().take(band_end).skip(band_start) {
+            *x = 0.0;
         }
     }
     let mut c_x = rust_x.clone();
 
     // Collapse masks: 0 = collapsed, 1 = not collapsed
     let mut rust_masks = vec![1u8; end * c];
-    for i in 5..10 {
-        rust_masks[i] = 0; // these bands collapsed
+    for mask in rust_masks.iter_mut().take(10).skip(5) {
+        *mask = 0; // these bands collapsed
     }
     let mut c_masks = rust_masks.clone();
 
     // Pulses: 0 for collapsed bands
     let mut pulses = vec![8i32; end];
-    for i in 5..10 {
-        pulses[i] = 0;
+    for pulse in pulses.iter_mut().take(10).skip(5) {
+        *pulse = 0;
     }
 
     // Band energies (current + two previous frames)

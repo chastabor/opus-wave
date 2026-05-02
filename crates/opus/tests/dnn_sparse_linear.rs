@@ -55,9 +55,16 @@ fn test_rdovae_gdense1_sparse_vs_c() {
     // The sparse float weights should have SPARSE_BLOCK_SIZE * total_blocks floats
     if let Some(ref fw) = gdense1.float_weights {
         let expected_floats = 32 * total_blocks;
-        eprintln!("  float_weights: {} floats (expected {})", fw.len(), expected_floats);
-        assert_eq!(fw.len(), expected_floats,
-                   "Float weight count mismatch for sparse layer");
+        eprintln!(
+            "  float_weights: {} floats (expected {})",
+            fw.len(),
+            expected_floats
+        );
+        assert_eq!(
+            fw.len(),
+            expected_floats,
+            "Float weight count mismatch for sparse layer"
+        );
     }
 
     // Compare Rust sparse_sgemv8x4 vs C sparse_sgemv8x4 using same weight data
@@ -68,7 +75,9 @@ fn test_rdovae_gdense1_sparse_vs_c() {
     opus_dnn::nnet::linear::compute_linear(gdense1, &mut rust_sgemv, &input);
     // Subtract bias to get raw sgemv output (float path uses regular bias)
     if let Some(ref bias) = gdense1.bias {
-        for i in 0..nb_outputs { rust_sgemv[i] -= bias[i]; }
+        for i in 0..nb_outputs {
+            rust_sgemv[i] -= bias[i];
+        }
     }
 
     let mut c_sgemv = vec![0.0f32; nb_outputs];
@@ -77,11 +86,16 @@ fn test_rdovae_gdense1_sparse_vs_c() {
     let (max_sgemv_diff, _) = common::max_abs_diff(&rust_sgemv, &c_sgemv);
 
     eprintln!("  sparse_sgemv8x4 max_diff = {max_sgemv_diff:.6e}");
-    eprintln!("  rust_sgemv[0..4] = {:?}", &rust_sgemv[..4.min(nb_outputs)]);
+    eprintln!(
+        "  rust_sgemv[0..4] = {:?}",
+        &rust_sgemv[..4.min(nb_outputs)]
+    );
     eprintln!("  c_sgemv[0..4]    = {:?}", &c_sgemv[..4.min(nb_outputs)]);
 
-    assert!(max_sgemv_diff < 1e-4,
-            "sparse_sgemv8x4 mismatch: max_diff={max_sgemv_diff}");
+    assert!(
+        max_sgemv_diff < 1e-4,
+        "sparse_sgemv8x4 mismatch: max_diff={max_sgemv_diff}"
+    );
 }
 
 /// Compare enc_dense1 output through C model init vs Rust model init.
@@ -104,12 +118,14 @@ fn test_rdovae_enc_dense1_via_c_model_init() {
     // Rust: using Rust-loaded model
     let mut rust_out = vec![0.0f32; nb_outputs];
     opus_dnn::nnet::ops::compute_generic_dense(
-        &model.enc_dense1, &mut rust_out, &input, opus_dnn::nnet::Activation::Tanh,
+        &model.enc_dense1,
+        &mut rust_out,
+        &input,
+        opus_dnn::nnet::Activation::Tanh,
     );
 
     // C: using C-loaded model (via wrap_rdovae_enc_dense1_only which calls C init_rdovaeenc)
-    let c_out = opus_ffi::c_rdovae_enc_dense1(&blob, &input)
-        .expect("C enc_dense1 failed");
+    let c_out = opus_ffi::c_rdovae_enc_dense1(&blob, &input).expect("C enc_dense1 failed");
 
     let (max_diff, _) = common::max_abs_diff(&rust_out, &c_out);
 
@@ -120,8 +136,10 @@ fn test_rdovae_enc_dense1_via_c_model_init() {
     eprintln!("  c[0..4]    = {:?}", &c_out[..4.min(nb_outputs)]);
 
     // If this is large, the model initialization paths load different weights
-    assert!(max_diff < 0.01,
-            "enc_dense1 C-vs-Rust model init divergence: {max_diff}");
+    assert!(
+        max_diff < 0.01,
+        "enc_dense1 C-vs-Rust model init divergence: {max_diff}"
+    );
 }
 
 /// Test RDOVAE encode with different input magnitudes against C.
@@ -158,12 +176,16 @@ fn rdovae_encode_vs_c_helper(
     let mut rust_latents = vec![0.0f32; latent_dim];
     let mut rust_state = vec![0.0f32; state_dim];
     opus_dnn::dred::rdovae_enc::dred_rdovae_encode_dframe(
-        &mut enc_state, model, &mut rust_latents, &mut rust_state, input,
+        &mut enc_state,
+        model,
+        &mut rust_latents,
+        &mut rust_state,
+        input,
     );
 
-    let (c_latents, c_state) = opus_ffi::c_rdovae_encode_dframe(
-        enc_blob, input, latent_dim, state_dim,
-    ).expect("C RDOVAE encode failed");
+    let (c_latents, c_state) =
+        opus_ffi::c_rdovae_encode_dframe(enc_blob, input, latent_dim, state_dim)
+            .expect("C RDOVAE encode failed");
 
     let (max_lat, _) = common::max_abs_diff(&rust_latents, &c_latents);
     let (max_st, _) = common::max_abs_diff(&rust_state, &c_state);
@@ -171,9 +193,18 @@ fn rdovae_encode_vs_c_helper(
     eprintln!("RDOVAE encode ({label} input):");
     eprintln!("  latent max_diff = {max_lat:.6}");
     eprintln!("  state max_diff = {max_st:.6}");
-    eprintln!("  rust_latents[0..4] = {:?}", &rust_latents[..4.min(latent_dim)]);
-    eprintln!("  c_latents[0..4]    = {:?}", &c_latents[..4.min(latent_dim)]);
-    eprintln!("  rust_state[0..4]   = {:?}", &rust_state[..4.min(state_dim)]);
+    eprintln!(
+        "  rust_latents[0..4] = {:?}",
+        &rust_latents[..4.min(latent_dim)]
+    );
+    eprintln!(
+        "  c_latents[0..4]    = {:?}",
+        &c_latents[..4.min(latent_dim)]
+    );
+    eprintln!(
+        "  rust_state[0..4]   = {:?}",
+        &rust_state[..4.min(state_dim)]
+    );
     eprintln!("  c_state[0..4]      = {:?}", &c_state[..4.min(state_dim)]);
 }
 
@@ -211,7 +242,10 @@ fn test_rdovae_enc_dense1_vs_c() {
     let (max_diff, _) = common::max_abs_diff(&rust_out, &c_out);
 
     eprintln!("  enc_dense1 max_diff = {max_diff:.6e}");
-    assert!(max_diff < 1e-4, "enc_dense1 (non-sparse) diff {max_diff} too large");
+    assert!(
+        max_diff < 1e-4,
+        "enc_dense1 (non-sparse) diff {max_diff} too large"
+    );
 }
 
 /// Verify Rust sparse_sgemv8x4 on gdense1 produces reasonable output.
@@ -249,5 +283,8 @@ fn test_rdovae_gdense1_sparse_sanity() {
 
     assert!(!has_nan, "Sparse sgemv produced NaN/Inf");
     assert!(!all_zero, "Sparse sgemv produced all zeros");
-    assert!(max_val < 1000.0, "Sparse sgemv produced unreasonably large values: {max_val}");
+    assert!(
+        max_val < 1000.0,
+        "Sparse sgemv produced unreasonably large values: {max_val}"
+    );
 }

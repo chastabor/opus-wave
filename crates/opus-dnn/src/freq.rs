@@ -27,8 +27,8 @@ const EBAND5MS: [usize; NB_BANDS] = [
 
 /// Band energy normalization. Matches C `compensation` from freq.c.
 const COMPENSATION: [f32; NB_BANDS] = [
-    0.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.666667, 0.5,
-    0.5, 0.5, 0.333333, 0.25, 0.25, 0.2, 0.166667, 0.173913,
+    0.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.666667, 0.5, 0.5, 0.5, 0.333333, 0.25, 0.25, 0.2,
+    0.166667, 0.173913,
 ];
 
 /// Pre-computed 320-point FFT state (lazy, computed once on first use).
@@ -338,8 +338,10 @@ mod tests {
         // The C DCT/IDCT are not exactly orthogonal (uniform sqrt(2/N) scale),
         // so roundtrip has a known factor. Verify the transform is at least
         // invertible up to a constant and produces deterministic output.
-        let input = [0.0f32, 1.0, -1.0, 0.5, -0.5, 0.0, 0.0, 0.0, 0.0,
-                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+        let input = [
+            0.0f32, 1.0, -1.0, 0.5, -0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0,
+        ];
         let mut dct_out = [0.0f32; NB_BANDS];
         let mut roundtrip = [0.0f32; NB_BANDS];
         dct(&mut dct_out, &input);
@@ -347,11 +349,18 @@ mod tests {
         // Applying twice should give back input scaled by N/2 * (2/N) = 1
         // for AC terms, but 2x for DC. Verify relative structure is preserved.
         // The non-zero elements should have consistent relative magnitudes.
-        let ratio = if roundtrip[1].abs() > 1e-10 { roundtrip[1] / input[1] } else { 1.0 };
+        let ratio = if roundtrip[1].abs() > 1e-10 {
+            roundtrip[1] / input[1]
+        } else {
+            1.0
+        };
         for i in 1..5 {
             if input[i].abs() > 1e-10 {
                 let r = roundtrip[i] / input[i];
-                assert!((r - ratio).abs() < 0.01, "inconsistent ratio at {i}: {r} vs {ratio}");
+                assert!(
+                    (r - ratio).abs() < 0.01,
+                    "inconsistent ratio at {i}: {r} vs {ratio}"
+                );
             }
         }
     }

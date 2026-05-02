@@ -1661,20 +1661,43 @@ pub fn c_mdct_bench_backward(
 
 unsafe extern "C" {
     pub fn wrap_compute_activation(output: *mut f32, input: *const f32, n: i32, activation: i32);
-    pub fn wrap_compute_linear(out: *mut f32, weights: *const f32, bias: *const f32,
-                               nb_inputs: i32, nb_outputs: i32, input: *const f32);
-    pub fn wrap_compute_linear_int8(out: *mut f32, weights: *const i8, bias: *const f32,
-                                    scale: *const f32, nb_inputs: i32, nb_outputs: i32,
-                                    input: *const f32);
-    pub fn wrap_compute_generic_dense(output: *mut f32, input: *const f32,
-                                      weights: *const f32, bias: *const f32,
-                                      nb_inputs: i32, nb_outputs: i32, activation: i32);
-    pub fn wrap_compute_generic_gru(state: *mut f32,
-                                    input_weights: *const f32, input_bias: *const f32,
-                                    recurrent_weights: *const f32, recurrent_bias: *const f32,
-                                    recurrent_diag: *const f32,
-                                    nb_inputs: i32, nb_neurons: i32,
-                                    input: *const f32);
+    pub fn wrap_compute_linear(
+        out: *mut f32,
+        weights: *const f32,
+        bias: *const f32,
+        nb_inputs: i32,
+        nb_outputs: i32,
+        input: *const f32,
+    );
+    pub fn wrap_compute_linear_int8(
+        out: *mut f32,
+        weights: *const i8,
+        bias: *const f32,
+        scale: *const f32,
+        nb_inputs: i32,
+        nb_outputs: i32,
+        input: *const f32,
+    );
+    pub fn wrap_compute_generic_dense(
+        output: *mut f32,
+        input: *const f32,
+        weights: *const f32,
+        bias: *const f32,
+        nb_inputs: i32,
+        nb_outputs: i32,
+        activation: i32,
+    );
+    pub fn wrap_compute_generic_gru(
+        state: *mut f32,
+        input_weights: *const f32,
+        input_bias: *const f32,
+        recurrent_weights: *const f32,
+        recurrent_bias: *const f32,
+        recurrent_diag: *const f32,
+        nb_inputs: i32,
+        nb_neurons: i32,
+        input: *const f32,
+    );
 }
 
 /// Safe wrapper: compare C compute_activation vs Rust.
@@ -1686,81 +1709,156 @@ pub fn c_compute_activation(output: &mut [f32], input: &[f32], activation: i32) 
 }
 
 /// Safe wrapper: C compute_linear with float weights.
-pub fn c_compute_linear(out: &mut [f32], weights: &[f32], bias: &[f32],
-                        nb_inputs: usize, nb_outputs: usize, input: &[f32]) {
+pub fn c_compute_linear(
+    out: &mut [f32],
+    weights: &[f32],
+    bias: &[f32],
+    nb_inputs: usize,
+    nb_outputs: usize,
+    input: &[f32],
+) {
     unsafe {
-        wrap_compute_linear(out.as_mut_ptr(), weights.as_ptr(), bias.as_ptr(),
-                           nb_inputs as i32, nb_outputs as i32, input.as_ptr());
+        wrap_compute_linear(
+            out.as_mut_ptr(),
+            weights.as_ptr(),
+            bias.as_ptr(),
+            nb_inputs as i32,
+            nb_outputs as i32,
+            input.as_ptr(),
+        );
     }
 }
 
 /// Safe wrapper: C compute_linear with int8 quantized weights.
-pub fn c_compute_linear_int8(out: &mut [f32], weights: &[i8], bias: &[f32],
-                             scale: &[f32], nb_inputs: usize, nb_outputs: usize, input: &[f32]) {
+pub fn c_compute_linear_int8(
+    out: &mut [f32],
+    weights: &[i8],
+    bias: &[f32],
+    scale: &[f32],
+    nb_inputs: usize,
+    nb_outputs: usize,
+    input: &[f32],
+) {
     unsafe {
-        wrap_compute_linear_int8(out.as_mut_ptr(), weights.as_ptr(), bias.as_ptr(),
-                                scale.as_ptr(), nb_inputs as i32, nb_outputs as i32, input.as_ptr());
+        wrap_compute_linear_int8(
+            out.as_mut_ptr(),
+            weights.as_ptr(),
+            bias.as_ptr(),
+            scale.as_ptr(),
+            nb_inputs as i32,
+            nb_outputs as i32,
+            input.as_ptr(),
+        );
     }
 }
 
 /// Safe wrapper: C compute_generic_dense.
-pub fn c_compute_generic_dense(output: &mut [f32], input: &[f32],
-                               weights: &[f32], bias: &[f32],
-                               nb_inputs: usize, nb_outputs: usize, activation: i32) {
+pub fn c_compute_generic_dense(
+    output: &mut [f32],
+    input: &[f32],
+    weights: &[f32],
+    bias: &[f32],
+    nb_inputs: usize,
+    nb_outputs: usize,
+    activation: i32,
+) {
     unsafe {
-        wrap_compute_generic_dense(output.as_mut_ptr(), input.as_ptr(),
-                                  weights.as_ptr(), bias.as_ptr(),
-                                  nb_inputs as i32, nb_outputs as i32, activation);
+        wrap_compute_generic_dense(
+            output.as_mut_ptr(),
+            input.as_ptr(),
+            weights.as_ptr(),
+            bias.as_ptr(),
+            nb_inputs as i32,
+            nb_outputs as i32,
+            activation,
+        );
     }
 }
 
 /// Safe wrapper: C compute_generic_gru.
-pub fn c_compute_generic_gru(state: &mut [f32],
-                             input_weights: &[f32], input_bias: &[f32],
-                             recurrent_weights: &[f32], recurrent_bias: &[f32],
-                             recurrent_diag: &[f32],
-                             nb_inputs: usize, nb_neurons: usize,
-                             input: &[f32]) {
+pub fn c_compute_generic_gru(
+    state: &mut [f32],
+    input_weights: &[f32],
+    input_bias: &[f32],
+    recurrent_weights: &[f32],
+    recurrent_bias: &[f32],
+    recurrent_diag: &[f32],
+    nb_inputs: usize,
+    nb_neurons: usize,
+    input: &[f32],
+) {
     unsafe {
-        wrap_compute_generic_gru(state.as_mut_ptr(),
-                                input_weights.as_ptr(), input_bias.as_ptr(),
-                                recurrent_weights.as_ptr(), recurrent_bias.as_ptr(),
-                                recurrent_diag.as_ptr(),
-                                nb_inputs as i32, nb_neurons as i32,
-                                input.as_ptr());
+        wrap_compute_generic_gru(
+            state.as_mut_ptr(),
+            input_weights.as_ptr(),
+            input_bias.as_ptr(),
+            recurrent_weights.as_ptr(),
+            recurrent_bias.as_ptr(),
+            recurrent_diag.as_ptr(),
+            nb_inputs as i32,
+            nb_neurons as i32,
+            input.as_ptr(),
+        );
     }
 }
 
 // ============ DNN activation + layer comparison FFI declarations ============
 
 unsafe extern "C" {
-    fn wrap_sparse_sgemv8x4(out: *mut f32, w: *const f32, idx: *const i32,
-                             rows: i32, x: *const f32);
-    fn wrap_dense_tanh_from_blob(blob: *const u8, blob_len: i32,
-                                  bias_name: *const u8, weights_name: *const u8,
-                                  output: *mut f32, input: *const f32,
-                                  nb_inputs: i32, nb_outputs: i32);
+    fn wrap_sparse_sgemv8x4(
+        out: *mut f32,
+        w: *const f32,
+        idx: *const i32,
+        rows: i32,
+        x: *const f32,
+    );
+    fn wrap_dense_tanh_from_blob(
+        blob: *const u8,
+        blob_len: i32,
+        bias_name: *const u8,
+        weights_name: *const u8,
+        output: *mut f32,
+        input: *const f32,
+        nb_inputs: i32,
+        nb_outputs: i32,
+    );
 }
 
 /// Sparse float sgemv8x4 via C.
 pub fn c_sparse_sgemv8x4(out: &mut [f32], w: &[f32], idx: &[i32], rows: usize, x: &[f32]) {
     unsafe {
-        wrap_sparse_sgemv8x4(out.as_mut_ptr(), w.as_ptr(), idx.as_ptr(), rows as i32, x.as_ptr());
+        wrap_sparse_sgemv8x4(
+            out.as_mut_ptr(),
+            w.as_ptr(),
+            idx.as_ptr(),
+            rows as i32,
+            x.as_ptr(),
+        );
     }
 }
 
 /// Compute dense+tanh from a weight blob via C.
-pub fn c_dense_tanh_from_blob(blob: &[u8], bias_name: &str, weights_name: &str,
-                               output: &mut [f32], input: &[f32],
-                               nb_inputs: usize, nb_outputs: usize) {
+pub fn c_dense_tanh_from_blob(
+    blob: &[u8],
+    bias_name: &str,
+    weights_name: &str,
+    output: &mut [f32],
+    input: &[f32],
+    nb_inputs: usize,
+    nb_outputs: usize,
+) {
     let bias_cstr = std::ffi::CString::new(bias_name).unwrap();
     let weights_cstr = std::ffi::CString::new(weights_name).unwrap();
     unsafe {
         wrap_dense_tanh_from_blob(
-            blob.as_ptr(), blob.len() as i32,
-            bias_cstr.as_ptr() as *const u8, weights_cstr.as_ptr() as *const u8,
-            output.as_mut_ptr(), input.as_ptr(),
-            nb_inputs as i32, nb_outputs as i32,
+            blob.as_ptr(),
+            blob.len() as i32,
+            bias_cstr.as_ptr() as *const u8,
+            weights_cstr.as_ptr() as *const u8,
+            output.as_mut_ptr(),
+            input.as_ptr(),
+            nb_inputs as i32,
+            nb_outputs as i32,
         );
     }
 }
@@ -1768,51 +1866,94 @@ pub fn c_dense_tanh_from_blob(blob: &[u8], bias_name: &str, weights_name: &str,
 // ============ DNN model-level wrapper FFI declarations ============
 
 unsafe extern "C" {
-    fn wrap_pitchdnn_compute(blob: *const u8, blob_len: i32,
-                             if_features: *const f32, xcorr_features: *const f32) -> f32;
-    fn wrap_pitchdnn_multi_step(blob: *const u8, blob_len: i32,
-                                if_features_seq: *const f32, xcorr_features_seq: *const f32,
-                                nb_if_features: i32, nb_xcorr_features: i32,
-                                n_steps: i32) -> f32;
-    fn wrap_rdovae_enc_dense1_only(blob: *const u8, blob_len: i32,
-                                    output: *mut f32, output_size: *mut i32,
-                                    input: *const f32) -> i32;
-    fn wrap_rdovae_encode_dframe(blob: *const u8, blob_len: i32,
-                                 latents: *mut f32, initial_state: *mut f32,
-                                 input: *const f32) -> i32;
-    fn wrap_rdovae_decode_all(blob: *const u8, blob_len: i32,
-                              output: *mut f32,
-                              initial_state: *const f32,
-                              latents: *const f32,
-                              nb_latents: i32) -> i32;
-    fn wrap_fargan_synthesize(blob: *const u8, blob_len: i32,
-                              pcm_out: *mut f32,
-                              cont_pcm: *const f32, cont_features: *const f32,
-                              features: *const f32) -> i32;
-    fn wrap_fargan_synthesize_multi(blob: *const u8, blob_len: i32,
-                                    pcm_out: *mut f32,
-                                    cont_pcm: *const f32, cont_features: *const f32,
-                                    features_seq: *const f32,
-                                    nb_features_per_frame: i32, n_frames: i32) -> i32;
+    fn wrap_pitchdnn_compute(
+        blob: *const u8,
+        blob_len: i32,
+        if_features: *const f32,
+        xcorr_features: *const f32,
+    ) -> f32;
+    fn wrap_pitchdnn_multi_step(
+        blob: *const u8,
+        blob_len: i32,
+        if_features_seq: *const f32,
+        xcorr_features_seq: *const f32,
+        nb_if_features: i32,
+        nb_xcorr_features: i32,
+        n_steps: i32,
+    ) -> f32;
+    fn wrap_rdovae_enc_dense1_only(
+        blob: *const u8,
+        blob_len: i32,
+        output: *mut f32,
+        output_size: *mut i32,
+        input: *const f32,
+    ) -> i32;
+    fn wrap_rdovae_encode_dframe(
+        blob: *const u8,
+        blob_len: i32,
+        latents: *mut f32,
+        initial_state: *mut f32,
+        input: *const f32,
+    ) -> i32;
+    fn wrap_rdovae_decode_all(
+        blob: *const u8,
+        blob_len: i32,
+        output: *mut f32,
+        initial_state: *const f32,
+        latents: *const f32,
+        nb_latents: i32,
+    ) -> i32;
+    fn wrap_fargan_synthesize(
+        blob: *const u8,
+        blob_len: i32,
+        pcm_out: *mut f32,
+        cont_pcm: *const f32,
+        cont_features: *const f32,
+        features: *const f32,
+    ) -> i32;
+    fn wrap_fargan_synthesize_multi(
+        blob: *const u8,
+        blob_len: i32,
+        pcm_out: *mut f32,
+        cont_pcm: *const f32,
+        cont_features: *const f32,
+        features_seq: *const f32,
+        nb_features_per_frame: i32,
+        n_frames: i32,
+    ) -> i32;
 }
 
 /// PitchDNN: single-step compute via C.
 pub fn c_pitchdnn_compute(blob: &[u8], if_features: &[f32], xcorr_features: &[f32]) -> f32 {
     unsafe {
-        wrap_pitchdnn_compute(blob.as_ptr(), blob.len() as i32,
-                              if_features.as_ptr(), xcorr_features.as_ptr())
+        wrap_pitchdnn_compute(
+            blob.as_ptr(),
+            blob.len() as i32,
+            if_features.as_ptr(),
+            xcorr_features.as_ptr(),
+        )
     }
 }
 
 /// PitchDNN: multi-step compute via C (GRU state accumulation).
-pub fn c_pitchdnn_multi_step(blob: &[u8], if_features_seq: &[f32], xcorr_features_seq: &[f32],
-                             nb_if_features: usize, nb_xcorr_features: usize,
-                             n_steps: usize) -> f32 {
+pub fn c_pitchdnn_multi_step(
+    blob: &[u8],
+    if_features_seq: &[f32],
+    xcorr_features_seq: &[f32],
+    nb_if_features: usize,
+    nb_xcorr_features: usize,
+    n_steps: usize,
+) -> f32 {
     unsafe {
-        wrap_pitchdnn_multi_step(blob.as_ptr(), blob.len() as i32,
-                                 if_features_seq.as_ptr(), xcorr_features_seq.as_ptr(),
-                                 nb_if_features as i32, nb_xcorr_features as i32,
-                                 n_steps as i32)
+        wrap_pitchdnn_multi_step(
+            blob.as_ptr(),
+            blob.len() as i32,
+            if_features_seq.as_ptr(),
+            xcorr_features_seq.as_ptr(),
+            nb_if_features as i32,
+            nb_xcorr_features as i32,
+            n_steps as i32,
+        )
     }
 }
 
@@ -1821,8 +1962,13 @@ pub fn c_rdovae_enc_dense1(blob: &[u8], input: &[f32]) -> Result<Vec<f32>, i32> 
     let mut output = vec![0.0f32; 256];
     let mut size = 0i32;
     let ret = unsafe {
-        wrap_rdovae_enc_dense1_only(blob.as_ptr(), blob.len() as i32,
-                                     output.as_mut_ptr(), &mut size, input.as_ptr())
+        wrap_rdovae_enc_dense1_only(
+            blob.as_ptr(),
+            blob.len() as i32,
+            output.as_mut_ptr(),
+            &mut size,
+            input.as_ptr(),
+        )
     };
     if ret == 0 {
         output.truncate(size as usize);
@@ -1833,56 +1979,94 @@ pub fn c_rdovae_enc_dense1(blob: &[u8], input: &[f32]) -> Result<Vec<f32>, i32> 
 }
 
 /// RDOVAE encode one frame via C. Returns (latents, initial_state) or error.
-pub fn c_rdovae_encode_dframe(blob: &[u8], input: &[f32],
-                               latent_dim: usize, state_dim: usize) -> Result<(Vec<f32>, Vec<f32>), i32> {
+pub fn c_rdovae_encode_dframe(
+    blob: &[u8],
+    input: &[f32],
+    latent_dim: usize,
+    state_dim: usize,
+) -> Result<(Vec<f32>, Vec<f32>), i32> {
     let mut latents = vec![0.0f32; latent_dim];
     let mut initial_state = vec![0.0f32; state_dim];
     let ret = unsafe {
-        wrap_rdovae_encode_dframe(blob.as_ptr(), blob.len() as i32,
-                                  latents.as_mut_ptr(), initial_state.as_mut_ptr(),
-                                  input.as_ptr())
+        wrap_rdovae_encode_dframe(
+            blob.as_ptr(),
+            blob.len() as i32,
+            latents.as_mut_ptr(),
+            initial_state.as_mut_ptr(),
+            input.as_ptr(),
+        )
     };
-    if ret == 0 { Ok((latents, initial_state)) } else { Err(ret) }
+    if ret == 0 {
+        Ok((latents, initial_state))
+    } else {
+        Err(ret)
+    }
 }
 
 /// RDOVAE decode all latent frames via C.
-pub fn c_rdovae_decode_all(blob: &[u8], initial_state: &[f32], latents: &[f32],
-                           nb_latents: usize, output_dim: usize) -> Result<Vec<f32>, i32> {
+pub fn c_rdovae_decode_all(
+    blob: &[u8],
+    initial_state: &[f32],
+    latents: &[f32],
+    nb_latents: usize,
+    output_dim: usize,
+) -> Result<Vec<f32>, i32> {
     let mut output = vec![0.0f32; nb_latents * output_dim];
     let ret = unsafe {
-        wrap_rdovae_decode_all(blob.as_ptr(), blob.len() as i32,
-                               output.as_mut_ptr(),
-                               initial_state.as_ptr(),
-                               latents.as_ptr(),
-                               nb_latents as i32)
+        wrap_rdovae_decode_all(
+            blob.as_ptr(),
+            blob.len() as i32,
+            output.as_mut_ptr(),
+            initial_state.as_ptr(),
+            latents.as_ptr(),
+            nb_latents as i32,
+        )
     };
     if ret == 0 { Ok(output) } else { Err(ret) }
 }
 
 /// FARGAN: single-frame synthesis via C (with continuity init).
-pub fn c_fargan_synthesize(blob: &[u8], cont_pcm: &[f32], cont_features: &[f32],
-                           features: &[f32]) -> Result<Vec<f32>, i32> {
+pub fn c_fargan_synthesize(
+    blob: &[u8],
+    cont_pcm: &[f32],
+    cont_features: &[f32],
+    features: &[f32],
+) -> Result<Vec<f32>, i32> {
     let mut pcm = vec![0.0f32; 160]; // FARGAN_FRAME_SIZE
     let ret = unsafe {
-        wrap_fargan_synthesize(blob.as_ptr(), blob.len() as i32,
-                               pcm.as_mut_ptr(),
-                               cont_pcm.as_ptr(), cont_features.as_ptr(),
-                               features.as_ptr())
+        wrap_fargan_synthesize(
+            blob.as_ptr(),
+            blob.len() as i32,
+            pcm.as_mut_ptr(),
+            cont_pcm.as_ptr(),
+            cont_features.as_ptr(),
+            features.as_ptr(),
+        )
     };
     if ret == 0 { Ok(pcm) } else { Err(ret) }
 }
 
 /// FARGAN: multi-frame synthesis via C (with continuity init).
-pub fn c_fargan_synthesize_multi(blob: &[u8], cont_pcm: &[f32], cont_features: &[f32],
-                                  features_seq: &[f32],
-                                  nb_features: usize, n_frames: usize) -> Result<Vec<f32>, i32> {
+pub fn c_fargan_synthesize_multi(
+    blob: &[u8],
+    cont_pcm: &[f32],
+    cont_features: &[f32],
+    features_seq: &[f32],
+    nb_features: usize,
+    n_frames: usize,
+) -> Result<Vec<f32>, i32> {
     let mut pcm = vec![0.0f32; n_frames * 160];
     let ret = unsafe {
-        wrap_fargan_synthesize_multi(blob.as_ptr(), blob.len() as i32,
-                                     pcm.as_mut_ptr(),
-                                     cont_pcm.as_ptr(), cont_features.as_ptr(),
-                                     features_seq.as_ptr(),
-                                     nb_features as i32, n_frames as i32)
+        wrap_fargan_synthesize_multi(
+            blob.as_ptr(),
+            blob.len() as i32,
+            pcm.as_mut_ptr(),
+            cont_pcm.as_ptr(),
+            cont_features.as_ptr(),
+            features_seq.as_ptr(),
+            nb_features as i32,
+            n_frames as i32,
+        )
     };
     if ret == 0 { Ok(pcm) } else { Err(ret) }
 }

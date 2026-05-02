@@ -1,5 +1,5 @@
-pub mod adaconv;
 pub mod adacomb;
+pub mod adaconv;
 pub mod adashape;
 
 // Adaptive convolution constants.
@@ -23,7 +23,8 @@ pub const ADASHAPE_MAX_FRAME_SIZE: usize = 240;
 /// Matches C `AdaConvState` from nndsp.h.
 pub struct AdaConvState {
     pub history: [f32; ADACONV_MAX_KERNEL_SIZE * ADACONV_MAX_INPUT_CHANNELS],
-    pub last_kernel: [f32; ADACONV_MAX_KERNEL_SIZE * ADACONV_MAX_INPUT_CHANNELS * ADACONV_MAX_OUTPUT_CHANNELS],
+    pub last_kernel:
+        [f32; ADACONV_MAX_KERNEL_SIZE * ADACONV_MAX_INPUT_CHANNELS * ADACONV_MAX_OUTPUT_CHANNELS],
     pub last_gain: f32,
 }
 
@@ -31,7 +32,9 @@ impl Default for AdaConvState {
     fn default() -> Self {
         AdaConvState {
             history: [0.0; ADACONV_MAX_KERNEL_SIZE * ADACONV_MAX_INPUT_CHANNELS],
-            last_kernel: [0.0; ADACONV_MAX_KERNEL_SIZE * ADACONV_MAX_INPUT_CHANNELS * ADACONV_MAX_OUTPUT_CHANNELS],
+            last_kernel: [0.0; ADACONV_MAX_KERNEL_SIZE
+                * ADACONV_MAX_INPUT_CHANNELS
+                * ADACONV_MAX_OUTPUT_CHANNELS],
             last_gain: 0.0,
         }
     }

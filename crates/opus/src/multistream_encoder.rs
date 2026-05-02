@@ -755,8 +755,8 @@ mod tests {
         enc.set_bitrate(32000);
 
         let mut pcm_in = vec![0.0f32; frame_size];
-        for i in 0..frame_size {
-            pcm_in[i] = 0.3 * (2.0 * std::f32::consts::PI * 220.0 * i as f32 / fs as f32).sin();
+        for (i, sample) in pcm_in.iter_mut().enumerate() {
+            *sample = 0.3 * (2.0 * std::f32::consts::PI * 220.0 * i as f32 / fs as f32).sin();
         }
 
         let mut packet = vec![0u8; 4000];
