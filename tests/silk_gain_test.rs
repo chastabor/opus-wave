@@ -4,7 +4,7 @@
 mod common;
 
 use common::rms;
-use opus_rust::{Application, Bitrate, Channels, OpusDecoder, OpusEncoder, SampleRate};
+use opus_wave::{Application, Bitrate, Channels, OpusDecoder, OpusEncoder, SampleRate};
 use opus_ffi::{COpusDecoder, COpusEncoder};
 
 const FRAME_SIZE: i32 = 320; // 20ms at 16kHz

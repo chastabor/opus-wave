@@ -2,11 +2,11 @@
 //! Compares Rust vs C reference performance.
 
 use criterion::{BatchSize, Criterion, Throughput, criterion_group, criterion_main};
-use opus_rust::celt::fft::{KissFftCpx, KissFftState, opus_fft};
-use opus_rust::celt::lpc;
-use opus_rust::celt::mdct::{MdctLookup, clt_mdct_backward, clt_mdct_forward};
-use opus_rust::celt::pitch;
-use opus_rust::celt::tables::WINDOW_120;
+use opus_wave::celt::fft::{KissFftCpx, KissFftState, opus_fft};
+use opus_wave::celt::lpc;
+use opus_wave::celt::mdct::{MdctLookup, clt_mdct_backward, clt_mdct_forward};
+use opus_wave::celt::pitch;
+use opus_wave::celt::tables::WINDOW_120;
 use opus_ffi::*;
 
 fn gen_sine(len: usize, freq: f32, fs: f32, amp: f32) -> Vec<f32> {

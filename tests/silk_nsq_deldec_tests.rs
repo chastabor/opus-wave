@@ -1,7 +1,7 @@
 // SILK delayed-decision NSQ test vectors and integration tests.
 // Tests different complexity levels which select scalar vs del-dec NSQ.
 
-use opus_rust::{Application, Bitrate, Channels, OpusDecoder, OpusEncoder, SampleRate};
+use opus_wave::{Application, Bitrate, Channels, OpusDecoder, OpusEncoder, SampleRate};
 
 // C reference packets at different complexities (16kHz, 16kbps, 200Hz tone)
 const SILK_COMPLEXITY_C0: &[u8] = &[

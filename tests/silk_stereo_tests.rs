@@ -21,7 +21,7 @@ mod common;
 //
 // Then paste the output into the C_STEREO_* constants below.
 
-use opus_rust::{
+use opus_wave::{
     Application, Bandwidth, Bitrate, Channels, OpusDecoder, OpusEncoder, SampleRate, Signal,
     opus_packet_get_nb_channels,
 };

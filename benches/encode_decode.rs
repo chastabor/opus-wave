@@ -4,9 +4,9 @@ mod common;
 
 use common::*;
 use criterion::{BatchSize, Criterion, Throughput, criterion_group, criterion_main};
-use opus_rust::Bitrate;
-use opus_rust::decoder::OpusDecoder;
-use opus_rust::encoder::OpusEncoder;
+use opus_wave::Bitrate;
+use opus_wave::decoder::OpusDecoder;
+use opus_wave::encoder::OpusEncoder;
 
 fn bench_rust_encode(c: &mut Criterion) {
     let mut group = c.benchmark_group("rust_encode");

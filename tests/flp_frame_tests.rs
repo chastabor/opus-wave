@@ -1,11 +1,11 @@
 //! Integration tests for the float frame encoder (Layer 4).
 //! Tests that silk_encode_frame_flp produces valid output for test signals.
 
-use opus_rust::range_coder::EcCtx;
-use opus_rust::silk::encoder_flp::encode_frame::silk_encode_frame_flp;
-use opus_rust::silk::encoder_flp::lbrr::LbrrState;
-use opus_rust::silk::nsq::NsqState;
-use opus_rust::silk::*;
+use opus_wave::range_coder::EcCtx;
+use opus_wave::silk::encoder_flp::encode_frame::silk_encode_frame_flp;
+use opus_wave::silk::encoder_flp::lbrr::LbrrState;
+use opus_wave::silk::nsq::NsqState;
+use opus_wave::silk::*;
 
 const FS_KHZ: i32 = 16;
 const NB_SUBFR: i32 = 4;

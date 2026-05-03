@@ -3,8 +3,8 @@
 mod common;
 
 use common::{assert_f32_slice_close, gen_noise, gen_sine_vec};
-use opus_rust::celt::bands;
-use opus_rust::celt::mode::CeltMode;
+use opus_wave::celt::bands;
+use opus_wave::celt::mode::CeltMode;
 use opus_ffi::*;
 
 // ── compute_band_energies ──

@@ -5,7 +5,7 @@
 mod common;
 
 use common::{assert_f32_close, assert_f32_slice_close, gen_noise, gen_sine_vec};
-use opus_rust::celt::mathops;
+use opus_wave::celt::mathops;
 use opus_ffi::*;
 
 // ══════════════════════════════════════════════════════════════════════

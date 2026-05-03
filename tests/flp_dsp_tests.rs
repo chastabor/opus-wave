@@ -3,7 +3,7 @@
 //! same input and asserts matching output.
 
 use opus_ffi::*;
-use opus_rust::silk::encoder_flp::dsp::*;
+use opus_wave::silk::encoder_flp::dsp::*;
 
 const ORDER: usize = 16;
 
@@ -295,11 +295,11 @@ fn warped_autocorrelation_flp_noise() {
 
 // ---- LTP analysis tests ----
 
-use opus_rust::silk::encoder_flp::find_ltp::{
+use opus_wave::silk::encoder_flp::find_ltp::{
     silk_corr_matrix_flp, silk_corr_vector_flp, silk_find_ltp_flp,
 };
-use opus_rust::silk::encoder_flp::quant_ltp_gains::silk_quant_ltp_gains;
-use opus_rust::silk::{LTP_ORDER, MAX_NB_SUBFR};
+use opus_wave::silk::encoder_flp::quant_ltp_gains::silk_quant_ltp_gains;
+use opus_wave::silk::{LTP_ORDER, MAX_NB_SUBFR};
 
 #[test]
 fn corr_vector_flp_matches() {
@@ -494,8 +494,8 @@ fn quant_ltp_gains_matches() {
 
 // ---- LTP scale control tests ----
 
-use opus_rust::silk::encoder_flp::ltp_scale_ctrl::silk_ltp_scale_ctrl_flp;
-use opus_rust::silk::{CODE_CONDITIONALLY, CODE_INDEPENDENTLY};
+use opus_wave::silk::encoder_flp::ltp_scale_ctrl::silk_ltp_scale_ctrl_flp;
+use opus_wave::silk::{CODE_CONDITIONALLY, CODE_INDEPENDENTLY};
 
 #[test]
 fn ltp_scale_ctrl_zero_loss() {

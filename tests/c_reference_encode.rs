@@ -4,7 +4,7 @@
 // then re-encode similar signals with the Rust encoder and verify
 // the Rust decoder can handle them.
 
-use opus_rust::{Application, Bitrate, Channels, OpusDecoder, OpusEncoder, SampleRate};
+use opus_wave::{Application, Bitrate, Channels, OpusDecoder, OpusEncoder, SampleRate};
 
 // Auto-generated from C libopus at 48kHz, 20ms frames
 

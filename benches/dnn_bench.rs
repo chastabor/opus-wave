@@ -4,12 +4,12 @@
 //! The compute cost is data-independent (matrix multiply timing does not depend on values).
 
 use criterion::{Criterion, criterion_group, criterion_main};
-use opus_rust::dnn::nnet::activations::compute_activation;
-use opus_rust::dnn::nnet::linear::compute_linear;
-use opus_rust::dnn::nnet::ops::{
+use opus_wave::dnn::nnet::activations::compute_activation;
+use opus_wave::dnn::nnet::linear::compute_linear;
+use opus_wave::dnn::nnet::ops::{
     compute_generic_conv1d, compute_generic_dense, compute_generic_gru, compute_glu,
 };
-use opus_rust::dnn::nnet::{Activation, LinearLayer};
+use opus_wave::dnn::nnet::{Activation, LinearLayer};
 
 /// Simple LCG for reproducible random test data.
 struct Rng(u32);
@@ -238,10 +238,10 @@ fn blobs_dir() -> std::path::PathBuf {
     std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("model-data/blobs")
 }
 
-fn load_blob(name: &str) -> Option<Vec<opus_rust::dnn::nnet::WeightArray>> {
+fn load_blob(name: &str) -> Option<Vec<opus_wave::dnn::nnet::WeightArray>> {
     let path = blobs_dir().join(name);
     let data = std::fs::read(&path).ok()?;
-    opus_rust::dnn::nnet::weights::parse_weights(&data)
+    opus_wave::dnn::nnet::weights::parse_weights(&data)
 }
 
 fn bench_model_weights(c: &mut Criterion) {
@@ -249,28 +249,28 @@ fn bench_model_weights(c: &mut Criterion) {
 
     // PitchDNN: load weights + init + inference
     if let Some(arrays) = load_blob("pitchdnn.bin")
-        && let Ok(model) = opus_rust::dnn::pitchdnn::init_pitchdnn(&arrays)
+        && let Ok(model) = opus_wave::dnn::pitchdnn::init_pitchdnn(&arrays)
     {
         let gru_n = model.gru_1_recurrent.nb_inputs;
-        let mut state = opus_rust::dnn::pitchdnn::PitchDnnState {
+        let mut state = opus_wave::dnn::pitchdnn::PitchDnnState {
             model,
             gru_state: vec![0.0f32; gru_n],
-            xcorr_mem1: vec![0.0f32; (opus_rust::dnn::pitchdnn::NB_XCORR_FEATURES + 2) * 16],
-            xcorr_mem2: vec![0.0f32; (opus_rust::dnn::pitchdnn::NB_XCORR_FEATURES + 2) * 16],
+            xcorr_mem1: vec![0.0f32; (opus_wave::dnn::pitchdnn::NB_XCORR_FEATURES + 2) * 16],
+            xcorr_mem2: vec![0.0f32; (opus_wave::dnn::pitchdnn::NB_XCORR_FEATURES + 2) * 16],
         };
         let mut rng = Rng::new(42);
-        let if_features = rng.vec_f32(opus_rust::dnn::pitchdnn::NB_IF_FEATURES);
-        let xcorr_features = rng.vec_f32(opus_rust::dnn::pitchdnn::NB_XCORR_FEATURES);
+        let if_features = rng.vec_f32(opus_wave::dnn::pitchdnn::NB_IF_FEATURES);
+        let xcorr_features = rng.vec_f32(opus_wave::dnn::pitchdnn::NB_XCORR_FEATURES);
         group.bench_function("pitchdnn_compute", |b| {
             b.iter(|| {
-                opus_rust::dnn::pitchdnn::compute_pitchdnn(&mut state, &if_features, &xcorr_features)
+                opus_wave::dnn::pitchdnn::compute_pitchdnn(&mut state, &if_features, &xcorr_features)
             });
         });
     }
 
     // FARGAN: linear layers with actual int8 weights
     if let Some(arrays) = load_blob("fargan.bin")
-        && let Ok(model) = opus_rust::dnn::fargan::init_fargan(&arrays)
+        && let Ok(model) = opus_wave::dnn::fargan::init_fargan(&arrays)
     {
         let mut rng = Rng::new(99);
         // Benchmark the conditioning network dense layer
@@ -286,7 +286,7 @@ fn bench_model_weights(c: &mut Criterion) {
     // LACE: load + init
     if let Some(arrays) = load_blob("lace.bin") {
         group.bench_function("lace_init", |b| {
-            b.iter(|| opus_rust::dnn::osce::lace::init_lace(&arrays).unwrap());
+            b.iter(|| opus_wave::dnn::osce::lace::init_lace(&arrays).unwrap());
         });
     }
 
@@ -294,14 +294,14 @@ fn bench_model_weights(c: &mut Criterion) {
     let pitchdnn_path = blobs_dir().join("pitchdnn.bin");
     if let Ok(data) = std::fs::read(&pitchdnn_path) {
         group.bench_function("parse_weights_pitchdnn", |b| {
-            b.iter(|| opus_rust::dnn::nnet::weights::parse_weights(&data).unwrap());
+            b.iter(|| opus_wave::dnn::nnet::weights::parse_weights(&data).unwrap());
         });
     }
 
     let fargan_path = blobs_dir().join("fargan.bin");
     if let Ok(data) = std::fs::read(&fargan_path) {
         group.bench_function("parse_weights_fargan", |b| {
-            b.iter(|| opus_rust::dnn::nnet::weights::parse_weights(&data).unwrap());
+            b.iter(|| opus_wave::dnn::nnet::weights::parse_weights(&data).unwrap());
         });
     }
 

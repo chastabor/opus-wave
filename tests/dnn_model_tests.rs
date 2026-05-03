@@ -20,17 +20,17 @@ fn test_pitchdnn_single_step_vs_c() {
         return;
     };
 
-    let arrays = opus_rust::dnn::nnet::weights::parse_weights(&blob).unwrap();
-    let model = opus_rust::dnn::pitchdnn::init_pitchdnn(&arrays).unwrap();
-    let mut state = opus_rust::dnn::pitchdnn::pitchdnn_state_init(model);
+    let arrays = opus_wave::dnn::nnet::weights::parse_weights(&blob).unwrap();
+    let model = opus_wave::dnn::pitchdnn::init_pitchdnn(&arrays).unwrap();
+    let mut state = opus_wave::dnn::pitchdnn::pitchdnn_state_init(model);
 
     let mut seed = 42u32;
-    let if_features = common::gen_random_vec(opus_rust::dnn::pitchdnn::NB_IF_FEATURES, &mut seed);
-    let xcorr_features = common::gen_random_vec(opus_rust::dnn::pitchdnn::NB_XCORR_FEATURES, &mut seed);
+    let if_features = common::gen_random_vec(opus_wave::dnn::pitchdnn::NB_IF_FEATURES, &mut seed);
+    let xcorr_features = common::gen_random_vec(opus_wave::dnn::pitchdnn::NB_XCORR_FEATURES, &mut seed);
 
     // Rust
     let rust_result =
-        opus_rust::dnn::pitchdnn::compute_pitchdnn(&mut state, &if_features, &xcorr_features);
+        opus_wave::dnn::pitchdnn::compute_pitchdnn(&mut state, &if_features, &xcorr_features);
 
     // C
     let c_result = opus_ffi::c_pitchdnn_compute(&blob, &if_features, &xcorr_features);
@@ -51,21 +51,21 @@ fn test_pitchdnn_multi_step_vs_c() {
     };
 
     let n_steps = 5;
-    let nb_if = opus_rust::dnn::pitchdnn::NB_IF_FEATURES;
-    let nb_xcorr = opus_rust::dnn::pitchdnn::NB_XCORR_FEATURES;
+    let nb_if = opus_wave::dnn::pitchdnn::NB_IF_FEATURES;
+    let nb_xcorr = opus_wave::dnn::pitchdnn::NB_XCORR_FEATURES;
 
     let mut seed = 123u32;
     let if_seq = common::gen_random_vec(n_steps * nb_if, &mut seed);
     let xcorr_seq = common::gen_random_vec(n_steps * nb_xcorr, &mut seed);
 
     // Rust
-    let arrays = opus_rust::dnn::nnet::weights::parse_weights(&blob).unwrap();
-    let model = opus_rust::dnn::pitchdnn::init_pitchdnn(&arrays).unwrap();
-    let mut state = opus_rust::dnn::pitchdnn::pitchdnn_state_init(model);
+    let arrays = opus_wave::dnn::nnet::weights::parse_weights(&blob).unwrap();
+    let model = opus_wave::dnn::pitchdnn::init_pitchdnn(&arrays).unwrap();
+    let mut state = opus_wave::dnn::pitchdnn::pitchdnn_state_init(model);
 
     let mut rust_result = 0.0f32;
     for i in 0..n_steps {
-        rust_result = opus_rust::dnn::pitchdnn::compute_pitchdnn(
+        rust_result = opus_wave::dnn::pitchdnn::compute_pitchdnn(
             &mut state,
             &if_seq[i * nb_if..(i + 1) * nb_if],
             &xcorr_seq[i * nb_xcorr..(i + 1) * nb_xcorr],
@@ -95,12 +95,12 @@ fn test_rdovae_encode_single_frame_vs_c() {
         return;
     };
 
-    let arrays = opus_rust::dnn::nnet::weights::parse_weights(&enc_blob).unwrap();
-    let model = opus_rust::dnn::dred::rdovae_enc::init_rdovae_enc(&arrays).unwrap();
+    let arrays = opus_wave::dnn::nnet::weights::parse_weights(&enc_blob).unwrap();
+    let model = opus_wave::dnn::dred::rdovae_enc::init_rdovae_enc(&arrays).unwrap();
     let latent_dim = model.latent_dim;
     let state_dim = model.state_dim;
     let input_dim = model.enc_dense1.nb_inputs;
-    let mut enc_state = opus_rust::dnn::dred::rdovae_enc::rdovae_enc_state_init(&model);
+    let mut enc_state = opus_wave::dnn::dred::rdovae_enc::rdovae_enc_state_init(&model);
 
     // Generate input (2*DRED_NUM_FEATURES = 40 per the C model)
     let mut seed = 77u32;
@@ -109,7 +109,7 @@ fn test_rdovae_encode_single_frame_vs_c() {
     // Rust
     let mut rust_latents = vec![0.0f32; latent_dim];
     let mut rust_state = vec![0.0f32; state_dim];
-    opus_rust::dnn::dred::rdovae_enc::dred_rdovae_encode_dframe(
+    opus_wave::dnn::dred::rdovae_enc::dred_rdovae_encode_dframe(
         &mut enc_state,
         &model,
         &mut rust_latents,
@@ -148,8 +148,8 @@ fn test_rdovae_decode_vs_c() {
     };
 
     // Use known small state and latent vectors for decoding
-    let dec_arrays = opus_rust::dnn::nnet::weights::parse_weights(&dec_blob).unwrap();
-    let dec_model = opus_rust::dnn::dred::rdovae_dec::init_rdovae_dec(&dec_arrays).unwrap();
+    let dec_arrays = opus_wave::dnn::nnet::weights::parse_weights(&dec_blob).unwrap();
+    let dec_model = opus_wave::dnn::dred::rdovae_dec::init_rdovae_dec(&dec_arrays).unwrap();
     let state_dim = dec_model.state_dim;
     let latent_dim = dec_model.latent_dim;
     let output_dim = dec_model.dec_output.nb_outputs;
@@ -167,9 +167,9 @@ fn test_rdovae_decode_vs_c() {
     let nb_latents = 1;
 
     // Rust decode
-    let mut dec_state = opus_rust::dnn::dred::rdovae_dec::rdovae_dec_state_init(&dec_model);
-    let mut rust_features = vec![0.0f32; 4 * nb_latents * opus_rust::dnn::dred::DRED_NUM_FEATURES];
-    opus_rust::dnn::dred::rdovae_dec::dred_rdovae_decode_all(
+    let mut dec_state = opus_wave::dnn::dred::rdovae_dec::rdovae_dec_state_init(&dec_model);
+    let mut rust_features = vec![0.0f32; 4 * nb_latents * opus_wave::dnn::dred::DRED_NUM_FEATURES];
+    opus_wave::dnn::dred::rdovae_dec::dred_rdovae_decode_all(
         &mut dec_state,
         &dec_model,
         &mut rust_features,
@@ -244,9 +244,9 @@ fn test_fargan_single_frame_vs_c() {
         return;
     };
 
-    let arrays = opus_rust::dnn::nnet::weights::parse_weights(&blob).unwrap();
-    let model = opus_rust::dnn::fargan::init_fargan(&arrays).unwrap();
-    let mut state = opus_rust::dnn::fargan::fargan_state_init(model);
+    let arrays = opus_wave::dnn::nnet::weights::parse_weights(&blob).unwrap();
+    let model = opus_wave::dnn::fargan::init_fargan(&arrays).unwrap();
+    let mut state = opus_wave::dnn::fargan::fargan_state_init(model);
 
     let mut seed = 55u32;
     // Continuity data: 320 PCM samples + 5 frames of features
@@ -255,9 +255,9 @@ fn test_fargan_single_frame_vs_c() {
     let features = common::gen_random_vec(FARGAN_NB_FEATURES, &mut seed);
 
     // Rust: init continuity, then synthesize
-    opus_rust::dnn::fargan::fargan_cont(&mut state, &cont_pcm, &cont_features);
-    let mut rust_pcm = vec![0.0f32; opus_rust::dnn::fargan::FARGAN_FRAME_SIZE];
-    opus_rust::dnn::fargan::fargan_synthesize(&mut state, &mut rust_pcm, &features);
+    opus_wave::dnn::fargan::fargan_cont(&mut state, &cont_pcm, &cont_features);
+    let mut rust_pcm = vec![0.0f32; opus_wave::dnn::fargan::FARGAN_FRAME_SIZE];
+    opus_wave::dnn::fargan::fargan_synthesize(&mut state, &mut rust_pcm, &features);
 
     // C: same continuity + synthesize
     let c_pcm = opus_ffi::c_fargan_synthesize(&blob, &cont_pcm, &cont_features, &features)
@@ -289,16 +289,16 @@ fn test_fargan_multi_frame_vs_c() {
     let features_seq = common::gen_random_vec(n_frames * nb_features, &mut seed);
 
     // Rust
-    let arrays = opus_rust::dnn::nnet::weights::parse_weights(&blob).unwrap();
-    let model = opus_rust::dnn::fargan::init_fargan(&arrays).unwrap();
-    let mut state = opus_rust::dnn::fargan::fargan_state_init(model);
-    opus_rust::dnn::fargan::fargan_cont(&mut state, &cont_pcm, &cont_features);
+    let arrays = opus_wave::dnn::nnet::weights::parse_weights(&blob).unwrap();
+    let model = opus_wave::dnn::fargan::init_fargan(&arrays).unwrap();
+    let mut state = opus_wave::dnn::fargan::fargan_state_init(model);
+    opus_wave::dnn::fargan::fargan_cont(&mut state, &cont_pcm, &cont_features);
 
-    let mut rust_pcm = vec![0.0f32; n_frames * opus_rust::dnn::fargan::FARGAN_FRAME_SIZE];
+    let mut rust_pcm = vec![0.0f32; n_frames * opus_wave::dnn::fargan::FARGAN_FRAME_SIZE];
     for i in 0..n_frames {
-        let start = i * opus_rust::dnn::fargan::FARGAN_FRAME_SIZE;
-        let end = start + opus_rust::dnn::fargan::FARGAN_FRAME_SIZE;
-        opus_rust::dnn::fargan::fargan_synthesize(
+        let start = i * opus_wave::dnn::fargan::FARGAN_FRAME_SIZE;
+        let end = start + opus_wave::dnn::fargan::FARGAN_FRAME_SIZE;
+        opus_wave::dnn::fargan::fargan_synthesize(
             &mut state,
             &mut rust_pcm[start..end],
             &features_seq[i * nb_features..(i + 1) * nb_features],
@@ -317,8 +317,8 @@ fn test_fargan_multi_frame_vs_c() {
     .expect("C FARGAN multi-frame synthesize failed");
 
     for i in 0..n_frames {
-        let start = i * opus_rust::dnn::fargan::FARGAN_FRAME_SIZE;
-        let end = start + opus_rust::dnn::fargan::FARGAN_FRAME_SIZE;
+        let start = i * opus_wave::dnn::fargan::FARGAN_FRAME_SIZE;
+        let end = start + opus_wave::dnn::fargan::FARGAN_FRAME_SIZE;
         let max_diff = rust_pcm[start..end]
             .iter()
             .zip(&c_pcm[start..end])

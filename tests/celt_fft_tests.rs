@@ -3,7 +3,7 @@
 mod common;
 
 use common::assert_f32_close;
-use opus_rust::celt::fft::{KissFftCpx, KissFftState, opus_fft};
+use opus_wave::celt::fft::{KissFftCpx, KissFftState, opus_fft};
 use opus_ffi::*;
 
 /// Run FFT via C wrapper and return (real, imag) output arrays.

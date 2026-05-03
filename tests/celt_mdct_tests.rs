@@ -3,8 +3,8 @@
 mod common;
 
 use common::assert_f32_slice_close;
-use opus_rust::celt::mdct::{MdctLookup, clt_mdct_backward, clt_mdct_forward};
-use opus_rust::celt::tables::WINDOW_120;
+use opus_wave::celt::mdct::{MdctLookup, clt_mdct_backward, clt_mdct_forward};
+use opus_wave::celt::tables::WINDOW_120;
 use opus_ffi::*;
 
 // ── MDCT Forward ──
