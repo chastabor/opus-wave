@@ -13,7 +13,7 @@ keywords = ["audio", "codec", "VoIP", "streaming"]
 categories = ["multimedia::encoding", "multimedia::audio"]
 repository = "https://github.com/chastabor/opus-rust"
 readme = "README.md"
-license = "COPYING"
+license-file = "COPYING"
 
 [features]
 default = []
